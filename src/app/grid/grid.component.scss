@@ -1,0 +1,28 @@
+:host {
+  --grid-size: 2vw;
+  --cell-color: black
+}
+
+table {
+table-layout: fixed;
+margin: 30px;
+margin-left: auto;
+margin-right: auto;
+max-width: 60vw;
+}
+
+td {
+    width: var(--grid-size);
+    height: var(--grid-size);
+    text-align: center;
+    vertical-align: middle;
+    border: 2px solid var(--cell-color);
+}
+
+table {
+    border: 2px solid black;
+}
+
+.no-border {
+  border: revert;
+}

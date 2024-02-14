@@ -1,0 +1,9 @@
+<table>
+    <tbody>
+        <tr *ngFor="let columns of cells">
+            <td *ngFor="let row of columns" [class.no-border]="!row">
+                {{row}}
+            </td>
+        </tr>
+    </tbody>
+</table>
