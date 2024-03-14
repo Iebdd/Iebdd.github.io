@@ -2,11 +2,11 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
 
 @Pipe({
-  name: 'letterPipe'
+  name: 'LetterPipe'
 })
 export class LetterPipe implements PipeTransform {
 
-  constructor(private LowerCasePipe: LowerCasePipe) {}
+  constructor(private lowerCasePipe: LowerCasePipe) {}
 
     charMap = new Map<number, number> ([
       [228, 26], [246, 27], [252, 28], [223, 29], [233, 30], [224, 31], [232, 32], [249, 33], [231, 34], [226, 35], [234, 36], [238, 37],
@@ -25,25 +25,26 @@ export class LetterPipe implements PipeTransform {
   // Most languages replace special letters like 'ä' with 'ae' within a crossword but I am keeping a few
   // special letters in case this proves to not always be the case
 
-  transform(input_s: string | number): number {
-    let input: number = 0;
-    if (typeof input_s === 'string') {
-      input = this.LowerCasePipe.transform(input_s).charCodeAt(0);
-    }
-    else {
-      input = input_s;
+  readonly ASCIIOffset: number = 97;
+  readonly UpperBound: number = 50;
+  readonly LowerBound: number = 0;
+
+  transform(input: string | number): number {
+    if (typeof input === 'number' && input == -1) {
+      return 0;
+    } 
+    if (typeof input === 'string') {
+      input = this.lowerCasePipe.transform(input).charCodeAt(0);
     }
     if (!this.letterMap.get(input) && !this.charMap.get(input)) {
-      (input < 26) ? input = input + 97 : input = input - 97 ;
-      if ((input <= 50 && input >= 0) || this.numbers.has(input)) {
+      (input < 26) ? input = input + this.ASCIIOffset : input = input - this.ASCIIOffset ;
+      if ((input <= this.UpperBound && input >= this.LowerBound) || this.numbers.has(input)) {
         return input;
-      }
-      else {
-        console.log(`Unknown number detected: ${input + 97}`);
+      } else {
+        console.log(`Unknown number detected: ${input + this.ASCIIOffset}`);
         return -1;
       }
-    }
-    else {
+    } else {
       return (this.letterMap.get(input)) ? this.letterMap.get(input)! : this.charMap.get(input)!;
     }
   }

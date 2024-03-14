@@ -1,4 +1,4 @@
-import { LetterPipe } from './letter.pipe';
+import { LetterPipe } from '../Pipes/letter.pipe';
 import { LowerCasePipe } from '@angular/common';
 
 describe('LetterPipe', () => {
@@ -25,7 +25,7 @@ describe('LetterPipe', () => {
   });
 
   it('Handles "exotic" values', () => {
-    expect(pipe.transform('Ä')).toBe(228);
+    expect(pipe.transform('Ä')).toBe(26);
     expect(pipe.transform('ø')).toBe(49);
   });
 });

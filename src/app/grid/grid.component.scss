@@ -17,6 +17,15 @@ td {
     text-align: center;
     vertical-align: middle;
     border: 2px solid var(--cell-color);
+    user-select: none;
+}
+
+.hidden {
+  color: white;
+}
+
+.blue-border {
+  border: 2px solid blue;
 }
 
 table {
@@ -24,5 +33,12 @@ table {
 }
 
 .no-border {
-  border: revert;
+  border-style: revert;
+}
+
+.button {
+  position: fixed;
+  left: 80vw;
+  right: 10vw;
+  top: 20vh;
 }

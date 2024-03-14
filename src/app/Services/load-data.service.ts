@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import data from '../Data/words.json';
+import data from '../../assets/Data/words.json';
 import { Dict_Entry } from '../model/dtypes';
 import { Observable, of } from 'rxjs';
 

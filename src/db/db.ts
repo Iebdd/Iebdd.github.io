@@ -1,6 +1,4 @@
 import Dexie, { Table } from 'dexie';
-import { DatabaseService } from '../app/Services/database.service';
-import { Injectable } from '@angular/core';
 
 
 export interface Occurence {
@@ -10,6 +8,7 @@ export interface Occurence {
 }
 export interface Word {
   id?: number,
+  hint_id: number,
   word: string
 }
 export interface Hint {
@@ -26,19 +25,14 @@ export class AppDB extends Dexie {
   constructor() {
     super('Crossword');
     this.version(1).stores({
-      Words: '++id',
+      Words: '++id, hint_id',
       Hints: '++id',
       Occurences: '++, occurence*',
     });
   }
 
-  getChar(letter: string): number {
-    letter = letter.toLowerCase();
-    return letter.charCodeAt(0) - 97
-  }
-
   async resetDatabase() {
-    await db.transaction('rw', 'Occurences', 'Hints', 'Words', 'Dict_Entry', () => {
+    await db.transaction('rw', 'Occurences', 'Hints', 'Words', () => {
       this.Occurences.clear();
       this.Hints.clear();
       this.Words.clear();

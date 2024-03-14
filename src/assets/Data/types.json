@@ -1,0 +1,41 @@
+{
+
+
+
+	"tiere": ["Ilger", "Muraene", "Lamprete", "Neunauge", "Olm", "Elger", "Rutte", "Ruppe", "Quappe", "Ruette", 
+		"Truesche", "Adler", "Wels", "Waller", "Hyaene", "Schakal", "Kondor", "Totengraeber", "Geier", "Marabu",
+		"Boa, Anakonda", ""],
+
+
+
+	"religion": ["Entschuldigung", "Demission", "Abdikation", "Ruecktritt", "Abdankung", "Kain", "Seth", "Adam", 
+		"Vesper", "Kommunion", "Eucharistie", "Hostie", "Oblate", "Wahn", "Wahnidee", "Hexenwahn", "Aberglaube",
+		"Zelle", "Klause", "Missionar", "Epode", "Idol", "Goetze", "Fetisch", "AT", "NT", "Indulgenz", "Tetzel",
+		"Profess", "Sara", "Sarah", "Isaak", "Ismael", "Apsis"],
+
+
+
+	"fremdwort": ["Kadaver", "Revision", "Variation", "Modifikation", "Variante", "Varietaet", 
+		"Dolerit", "Lignit", "Isotop", "Ozon", "Demontage", "Isatin", "Dia", "Foto", "Photo", "Globus", "Alphabet", 
+		"Isolierung", "Moulage", "Estampe", "Vesper", "Souper", "Dinner", "Soiree", "Okzident", "Eucharistie", "Agape", 
+		"Hostie", "Oblate", "Serenade", "Phosporus", "Vagant", "Desperado", "Hasardeur", "Redaktion", "Expedition", 
+		"Apanage", "Pauschale", "Draen", "Drain", "Sequenz", "Laxativ", "Obolous", "Tribut", "Exmatrikel", "Katalysator",
+		"banal", "trivial", "stereotyp", "Platituede", "Plattituede", "Dekokt", "Dosis", "Ration", "Portion", "Diaeten",
+		"Fraktion", "Mandatar, Delegierter", "Deputierter", "Parlamentarier", "Emissaer", "Missionar", "Epode",
+		"perfekt", "isoliert", "Getto", "Ghetto", "Extrakt", "Claim", "Etappe", "Trasse", "passe", "Separee", "Reflex",
+		"Idol", "Fetisch", "Limes", "Moulage", "Matritze", "Expose", "Exposee", "Traktat", "Monographie", "Vasall",
+		"Aktand", "Takeoff", "Remedur", "Perversion", "Baccalaureat", "Bakkalaureat", "Isolation", "Klischee",
+		"Konvention", "Derivat", "Parentel", "Abbreviatur", "Exitus", "Profess", "Refues", "Deduktion", "Aberration",
+		"degressiv", "Antipathie", "Dementi", "Frottage", "Kordon", "Sinter", "Syndikat", "Opanke", "Mokassin",
+		"Exhaustor", "Poem", "Mammon", "Gazette", "Skonto", "Disagio", "Apsis"],
+
+
+
+	"land": ["Chile", "Brasilien", "Argentinien", "Aethiopien", "BENELUX", "Al", "Ala", "Ak", "Alas", "Ca", "Cal", "Co", "Col", "DC", "Ct", "Conn",
+					 "Dak", "De", "Del"],
+
+
+
+	"orte": ["Dom", "Ponttor", "Kaiserdom", "Karlsschrein", "Tivoli", "RWTH", "Eisenbrunnen", "Venus", "Aethiopien", "Getto", "Ghetto"]
+
+}

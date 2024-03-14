@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import Dexie from 'dexie';
-import { LowerCasePipe } from '@angular/common';
-import { db, Occurence, Word} from '../../db/db';
+import { db } from '../../db/db';
 import { LetterPipe } from '../Pipes/letter.pipe';
 import { LoadDataService } from './load-data.service';
 import { Dict_Entry } from '../model/dtypes';
@@ -12,12 +11,12 @@ import { Dict_Entry } from '../model/dtypes';
 export class DatabaseService {
 
   constructor(private LetterPipe: LetterPipe,
-              private LoadDataService: LoadDataService,
-              private LowerCasePipe: LowerCasePipe) { }
+              private LoadDataService: LoadDataService) { }
 
-  async addWord(word: string) {
+  async addWord(word: string, hint_id: number) {
     db.Words.add({
-      word: word
+      word: word,
+      hint_id: hint_id
     })
   }
 
@@ -35,34 +34,36 @@ export class DatabaseService {
   }
 
   async getWord(word_id: number) {
-    return db.Words.where({
+    return db.Words.get({
       id: word_id
-    })
+    });
+  }
+
+  async getWords() {
+    return db.Words
     .toArray();
   }
 
   async getHint(hint_id: number) {
-    return db.Hints.where({
+    return db.Hints.get({
       id: hint_id
-    })
-    .toArray()
+    });
   }
 
-  async getOccurences(letter: number, index: number) {
+  async getOccurences(letter: number) {
     return db.Occurences
       .where('occurence')
       .equals(letter)
-      .and(entry => entry.occurence.indexOf(letter) == index)
       .toArray();
   }
 
   async initDB() {
     let exist: boolean = true;
-    await Dexie.exists("Crossword").then(function(exists) {(!exists) ? exist = false : null;})
+    await Dexie.exists("Crossword")
+      .then(function(exists) {(!exists) ? exist = false : null;})
     await db.open()
       .then(data => console.log("Dexie DB opened"))
       .catch(err => console.log(err.message));
-    console.log(exist);
     (!exist) ? this.createEntries() : null;
   }
 
@@ -78,7 +79,7 @@ export class DatabaseService {
       curr_entry = this.LoadDataService.getFragment(hints);
       this.addHint(curr_entry.hint);
       for (let words = 0; words < curr_entry.words.length; words++) {
-        this.addWord(curr_entry.words[words]);
+        this.addWord(curr_entry.words[words], hints);
         for(let occs = 0; occs < curr_entry.words[words].length; occs++) {
           occs_buffer.push(this.LetterPipe.transform(curr_entry.words[words][occs]));
         }

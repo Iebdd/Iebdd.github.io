@@ -1,9 +1,48 @@
+<div class="button">
+  <button (click)="fillGrid()">Generate!</button> <br>
+  <button (click)="toggleContent()">@if(hidden_content) {Show Content} @else {Hide Content}</button>
+</div>
 <table>
-    <tbody>
-        <tr *ngFor="let columns of cells">
-            <td *ngFor="let row of columns" [class.no-border]="!row">
-                {{row}}
+  <tbody>
+    @for (columns of cell_grid; track columns) {
+      <tr>
+        @for (rows of columns; track rows) {
+            <td [class.blue-border]="rows.isHint()" [class.no-border]="rows.getContent() == -1" [class.hidden]="hidden_content">
+
+              {{rows.getContent() | CharPipe}}
             </td>
-        </tr>
-    </tbody>
+        }
+      </tr>
+    }
+  </tbody>
+</table>
+
+
+
+<table>
+  <tbody>
+    @for (columns of cell_grid; track columns) {
+      <tr>
+        @for (rows of columns; track rows) {
+          <td>
+            {{rows.getHint(0)}}
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    @for (columns of cell_grid; track columns) {
+      <tr>
+        @for (rows of columns; track rows) {
+          <td>
+            {{rows.getDirection(0)}}
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
 </table>

@@ -21,7 +21,7 @@ export class AppComponent implements OnInit {
     this.DatabaseService.initDB();
   }
 
-  results$ = liveQuery(() => this.DatabaseService.getOccurences(this.LetterPipe.transform('z'), 2));
+  results$ = liveQuery(() => this.DatabaseService.getOccurences(this.LetterPipe.transform('z')));
 
 }
 
