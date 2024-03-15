@@ -89,3 +89,42 @@ export class Cell {
         return this.hints[0];
     }
 }
+
+export class AdjacentContent {
+    up: number;
+    left: number;
+    right: number;
+    down: number;
+    diagonalleft: number;
+    diagonalright: number;
+    diagonalleftup: number;
+    diagonalrightup: number;
+
+    constructor(up: number, left: number, right: number, down: number, 
+                diagonalleft: number, diagonalright: number, diagonalleftup: number, 
+                diagonalrightup: number) {
+        this.up = up;
+        this.left = left;
+        this.right = right;
+        this.down = down;
+        this.diagonalleft = diagonalleft;
+        this.diagonalright = diagonalright;
+        this.diagonalleftup = diagonalleftup;
+        this.diagonalrightup = diagonalrightup;
+    }
+}
+
+export class Edges {
+    up: number;
+    left: number;
+    right: number;
+    down: number;
+
+    constructor(up: number, left: number, right: number, down: number) {
+        this.up = up;
+        this.left = left;
+        this.right = right;
+        this.down = down;
+    }
+
+}

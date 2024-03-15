@@ -1,27 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { DatabaseService } from './Services/database.service';
-import { liveQuery } from 'dexie';
-import { LetterPipe } from './Pipes/letter.pipe';
+import { Component} from '@angular/core';
+import { GridComponent } from './grid/grid.component';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: true,
+    imports: [GridComponent]
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
 
   String = String;
   
 
-  constructor (private DatabaseService: DatabaseService,
-               private LetterPipe: LetterPipe) {}
+  constructor () {}
   title = 'Crossword_Maker';
-
-  async ngOnInit() {
-    this.DatabaseService.initDB();
-  }
-
-  results$ = liveQuery(() => this.DatabaseService.getOccurences(this.LetterPipe.transform('z')));
 
 }
 

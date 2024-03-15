@@ -3,14 +3,15 @@ import { UpperCasePipe } from '@angular/common';
 import { LetterPipe } from './letter.pipe';
 
 @Pipe({
-  name: 'CharPipe',
+    name: 'char',
+    standalone: true,
 })
 export class CharPipe implements PipeTransform {
 
-  constructor(private UpperCasePipe: UpperCasePipe, private LetterPipe: LetterPipe) {}
+  constructor(private upperCasePipe: UpperCasePipe, private letterPipe: LetterPipe) {}
 
   transform(char: number, toUpper: boolean = true): string {
-    return (toUpper) ? this.UpperCasePipe.transform(String.fromCharCode(this.LetterPipe.transform(char))) : String.fromCharCode(this.LetterPipe.transform(char));
+    return (toUpper) ? this.upperCasePipe.transform(String.fromCharCode(this.letterPipe.transform(char))) : String.fromCharCode(this.letterPipe.transform(char));
   }
 
 }

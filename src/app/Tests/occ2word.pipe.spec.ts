@@ -1,13 +1,16 @@
 import { Occ2WordPipe } from '../Pipes/occ2word.pipe';
-import { LetterPipe } from '../Pipes/letter.pipe';
 import { CharPipe } from '../Pipes/char.pipe';
-import { LowerCasePipe, UpperCasePipe } from '@angular/common';
+import { MockBuilder, ngMocks} from 'ng-mocks';
 
 describe('Occ2WordPipe', () => {
 
+    beforeEach(() => {
+      return MockBuilder(Occ2WordPipe)
+      .keep(CharPipe)
+    });
 
   it('create an instance', () => {
-    const pipe = new Occ2WordPipe(new LetterPipe(new LowerCasePipe), new CharPipe(new UpperCasePipe));
+    const pipe = ngMocks.get(Occ2WordPipe)
     expect(pipe).toBeTruthy();
   });
 });

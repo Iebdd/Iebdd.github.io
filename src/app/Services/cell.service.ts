@@ -3,7 +3,7 @@ import { BehaviorSubject, of, Observable } from 'rxjs';
 import { Word, Occurence } from '../../db/db'; 
 import { Options } from '../model/dtypes'; 
 import { Directions, Parameters, ColRow, ID } from '../model/enums';
-import { Cell } from '../model/classes';
+import { Cell, AdjacentContent, Edges } from '../model/classes';
 import { LetterPipe } from '../Pipes/letter.pipe';
 import { CharPipe } from '../Pipes/char.pipe';
 import { RndIntPipe } from '../Pipes/rnd-int.pipe';
@@ -23,9 +23,6 @@ export class CellService {
               private Occ2WordPipe: Occ2WordPipe,
               private CharPipe: CharPipe,
               private LowerCasePipe: LowerCasePipe) { }
-  CellRangeError = Error("[[TODO Index out of cell range!]]");
-  NoSquareError = Error("[[TODO Operation only possible for square grids!]]");
-  GridSizeError = Error("[[TODO Grid Size must be larger than 1!]]");
   TimeoutError = Error("[[TODO Script has taken too long to execute]]");
   grid_size: number[] = [16, 16];
   cell_grid: Cell[][] = [];
@@ -120,6 +117,10 @@ export class CellService {
       }
       next_direction = this.getNextDirection(options.directions);
       if (this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].getDirections().includes(next_direction)) {
+        continue;
+      }
+      if(!this.checkAdjacentCells(cursor[ColRow.Column], cursor[ColRow.Row], next_direction)) {
+        console.log('Its happening');
         continue;
       }
       pivot_letter = this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].getContent();
@@ -275,7 +276,64 @@ export class CellService {
     let min_length: number = Math.min(Math.floor(this.grid_size[0] / 2), Math.floor(this.grid_size[1] / 2));
     return words.filter((element) => element.word.length >= min_length);
   }
-
+  checkAdjacentCells(column: number, row: number, direction: Directions): boolean {
+    let max_columns: number = this.grid_size[0] - 1;
+    let max_rows: number = this.grid_size[1] - 1;
+    let free: boolean = true;
+    let adj_cells: AdjacentContent = { //Up, Left, Right, Down, DiagonalLeft, DiagonalRight, DiagonalUpLeft, DiagonalUpRight
+      up: (column != 0) ? this.cell_grid[column - 1][row].getContent() : -1,
+      left: (row != 0) ? this.cell_grid[column][row - 1].getContent() : -1,
+      right: (row < max_rows)  ? this.cell_grid[column][row + 1].getContent() : -1,
+      down: (column < max_columns) ? this.cell_grid[column + 1][ row].getContent() : -1,
+      diagonalleft: (column != 0 && row < max_rows) ? this.cell_grid[column - 1][row + 1].getContent() : -1,
+      diagonalright: (column < max_columns && row < max_rows) ? this.cell_grid[column + 1][row + 1].getContent() : -1,
+      diagonalleftup: (column != 0 && row != 0) ? this.cell_grid[column - 1][row - 1].getContent() : -1,
+      diagonalrightup: (column != 0 && row < max_rows) ? this.cell_grid[column - 1][row + 1].getContent() : -1
+    }
+     switch(direction) {
+      case Directions.Left:
+        (adj_cells.left != -1) ? free = false : null;
+        (adj_cells.diagonalleftup != -1) ? free = false : null;
+        (adj_cells.diagonalleft != -1) ? free = false : null;
+      break;
+      case Directions.Right:
+        (adj_cells.right != -1) ? free = false : null;
+        (adj_cells.diagonalrightup != -1) ? free = false : null;
+        (adj_cells.diagonalright != -1) ? free = false : null;
+      break;
+      case Directions.Up:
+        (adj_cells.up != -1) ? free = false : null;
+        (adj_cells.diagonalleftup != -1) ? free = false : null;
+        (adj_cells.diagonalrightup != -1) ? free = false : null;
+      break;
+      case Directions.Down:
+        (adj_cells.down != -1) ? free = false : null;
+        (adj_cells.diagonalleft != -1) ? free = false : null;
+        (adj_cells.diagonalright != -1) ? free = false : null;
+      break;
+      case Directions.DiagonalLeft:
+        (adj_cells.left != -1) ? free = false : null;
+        (adj_cells.down != -1) ? free = false : null;
+        (adj_cells.diagonalleft != -1) ? free = false : null;
+      break;
+      case Directions.DiagonalRight:
+        (adj_cells.right != -1) ? free = false : null;
+        (adj_cells.down != -1) ? free = false : null;
+        (adj_cells.diagonalright != -1) ? free = false : null;
+      break;
+      case Directions.DiagonalLeftUp:
+        (adj_cells.left != -1) ? free = false : null;
+        (adj_cells.up != -1) ? free = false : null;
+        (adj_cells.diagonalleftup != -1) ? free = false : null;
+      break;
+      case Directions.DiagonalRightUp:
+        (adj_cells.right != -1) ? free = false : null;
+        (adj_cells.up != -1) ? free = false : null;
+        (adj_cells.diagonalrightup != -1) ? free = false : null;
+      break;
+    }
+    return free;
+  }
 
   shuffleArray<Type>(array: Array<Type>): Array<Type> {
     for(let index = array.length - 1; index > 0; index--) {
@@ -425,27 +483,6 @@ export class CellService {
     return regex;
   }
 
-  boundGrid(direction: Directions, word_length: number): number[] {
-    switch (direction) {
-      case Directions.Left:
-        return [0, Math.abs(word_length), 0, 0]
-      case Directions.Right:
-        return [0, 0, -Math.abs(word_length), 0];
-      case Directions.Down:
-        return [0, 0, 0, -Math.abs(word_length)];
-      case Directions.Up:
-        return [Math.abs(word_length), 0, 0, 0];
-      case Directions.DiagonalLeft:
-        return [0, Math.abs(word_length), 0, -Math.abs(word_length)];
-      case Directions.DiagonalRight:
-        return [0, 0, -Math.abs(word_length), -Math.abs(word_length)];
-      case Directions.DiagonalRightUp:
-        return [Math.abs(word_length), 0, -Math.abs(word_length)];
-      case Directions.DiagonalLeftUp:
-        return [Math.abs(word_length), Math.abs(word_length)];
-    }
-  }
-
   createMatchingArrays(column: number, row: number, direction: Directions): number[] {
     let cursor: [number, number] = this.moveToEdge(column, row, direction);
     let max_length = this.getMaxLength(cursor[ColRow.Column], cursor[ColRow.Row], direction) - 1;
@@ -565,7 +602,12 @@ export class CellService {
     direction = this.invertDirection(direction);
     let max_columns: number = this.grid_size[0] - 1;
     let max_rows: number = this.grid_size[1] - 1;
-    let distance: number[] = [column, row, max_rows - row, max_columns - column];  /* Up, Left, Right, Down */
+    let distances: Edges = { /* Up, Left, Right, Down */
+    up: column,
+    left: row,
+    right: max_rows - row,
+    down: max_columns - column
+  }
     this.checkValidity(column, row);
 
     switch(direction) {
@@ -578,13 +620,13 @@ export class CellService {
       case Directions.Up:
         return [0, row];
       case Directions.DiagonalLeft:
-        return (distance[3] < distance[1]) ? [max_columns, row - distance[3]] : [column + distance[1], 0];
+        return (distances.down < distances.left) ? [max_columns, row - distances.down] : [column + distances.left, 0];
       case Directions.DiagonalRightUp:
-        return (distance[0] < distance[2]) ? [0, row + distance[0]] : [column - distance[2], max_rows];
+        return (distances.up < distances.right) ? [0, row + distances.up] : [column - distances.right, max_rows];
       case Directions.DiagonalRight:
-        return (distance[3] < distance[2]) ? [max_columns, row + distance[3]] : [column + distance[2], max_rows];
+        return (distances.down < distances.right) ? [max_columns, row + distances.down] : [column + distances.right, max_rows];
       case Directions.DiagonalLeftUp:
-        return (distance[0] < distance[1]) ? [0, row - distance[0]] : [column - distance[1], 0];
+        return (distances.up < distances.left) ? [0, row - distances.up] : [column - distances.left, 0];
     }
 
   }
@@ -592,7 +634,12 @@ export class CellService {
   getMaxLength(column: number, row: number, direction: Directions): number {
     let max_columns: number = this.grid_size[0];
     let max_rows: number = this.grid_size[1];
-    let distance: number[] = [column, row, max_rows - row, max_columns - column];  /* Up, Left, Right, Down */
+    let distances: Edges = { /* Up, Left, Right, Down */
+      up: column,
+      left: row,
+      right: max_rows - row,
+      down: max_columns - column
+    }
     this.checkValidity(column, row)
 
     switch(direction) {
@@ -605,13 +652,13 @@ export class CellService {
       case Directions.Up:
         return column + 1;
       case Directions.DiagonalLeft:
-        return (distance[3] < distance[1]) ? max_columns - column : row + 1 ;
+        return (distances.down < distances.left) ? max_columns - column : row + 1 ;
       case Directions.DiagonalRightUp:
-        return (distance[0] < distance[2]) ? column + 1 : max_rows - row;
+        return (distances.up < distances.right) ? column + 1 : max_rows - row;
       case Directions.DiagonalRight:
-        return (distance[3] < distance[2]) ? max_columns - column: max_rows - row;
+        return (distances.down < distances.right) ? max_columns - column: max_rows - row;
       case Directions.DiagonalLeftUp:
-        return (distance[0] < distance[1]) ? column + 1 : row + 1;
+        return (distances.up < distances.left) ? column + 1 : row + 1;
     }
   }
 
@@ -620,10 +667,10 @@ export class CellService {
     let max_rows: number = this.grid_size[1] - 1;
 
     if (column > max_columns || row > max_rows) {
-      throw RangeError(`Entered coodinates exceed grid size: ${column}/${max_columns}, ${row}/${max_rows}`);
+      throw new RangeError(`Entered coodinates exceed grid size: ${column}/${max_columns}, ${row}/${max_rows}`);
     }
     if (max_columns <= 0 || max_rows <= 0) {
-      throw this.GridSizeError
+      throw new RangeError(`Column or Row size set to 0: ${max_columns}/${max_rows}`);
     }
     if(steps < 0) {
       throw new RangeError(`Incorrect move parameter: Column: ${column}, Row: ${row}, Steps: ${steps}`);

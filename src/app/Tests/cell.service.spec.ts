@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { Directions } from '../model/enums';
 
 import { CellService } from '../Services/cell.service';
-import { AppModule } from '../app.module';
 import { DatabaseService } from '../Services/database.service';
 import { CharPipe } from '../Pipes/char.pipe';
 import { LetterPipe } from '../Pipes/letter.pipe';
@@ -14,7 +13,7 @@ import { MockBuilder, ngMocks} from 'ng-mocks';
 describe('CellService', () => {
 
   beforeEach(() => {
-    return MockBuilder(CellService, AppModule)
+    return MockBuilder(CellService)
     .keep(DatabaseService)
     .keep(CharPipe)
     .keep(LetterPipe);
@@ -50,18 +49,18 @@ describe('CellService', () => {
   it('should move the cursor to the correct edge', () => {
     const service = ngMocks.get(CellService);
     service.grid_size = [16, 16];
-    expect(service.moveToBeginning(5, 5, Directions.Left)).toEqual([5, 15]);
-    expect(service.moveToBeginning(9, 1, Directions.Right)).toEqual([9, 0]);
-    expect(service.moveToBeginning(13, 12, Directions.Down)).toEqual([0, 12]);
-    expect(service.moveToBeginning(0, 0, Directions.Up)).toEqual([15, 0]);
-    expect(service.moveToBeginning(8, 10, Directions.DiagonalLeft)).toEqual([3, 15]);
-    expect(service.moveToBeginning(7, 3, Directions.DiagonalLeft)).toEqual([0, 10]);
-    expect(service.moveToBeginning(9, 10, Directions.DiagonalRight)).toEqual([0, 1]);
-    expect(service.moveToBeginning(12, 7, Directions.DiagonalRight)).toEqual([5, 0]);
-    expect(service.moveToBeginning(10, 7, Directions.DiagonalRightUp)).toEqual([15, 2]);
-    expect(service.moveToBeginning(7, 1, Directions.DiagonalRightUp)).toEqual([8, 0]);
-    expect(service.moveToBeginning(14, 3, Directions.DiagonalLeftUp)).toEqual([15, 4]);
-    expect(service.moveToBeginning(6, 15, Directions.DiagonalLeftUp)).toEqual([6, 15]);
+    expect(service.moveToEdge(5, 5, Directions.Left)).toEqual([5, 15]);
+    expect(service.moveToEdge(9, 1, Directions.Right)).toEqual([9, 0]);
+    expect(service.moveToEdge(13, 12, Directions.Down)).toEqual([0, 12]);
+    expect(service.moveToEdge(0, 0, Directions.Up)).toEqual([15, 0]);
+    expect(service.moveToEdge(8, 10, Directions.DiagonalLeft)).toEqual([3, 15]);
+    expect(service.moveToEdge(7, 3, Directions.DiagonalLeft)).toEqual([0, 10]);
+    expect(service.moveToEdge(9, 10, Directions.DiagonalRight)).toEqual([0, 1]);
+    expect(service.moveToEdge(12, 7, Directions.DiagonalRight)).toEqual([5, 0]);
+    expect(service.moveToEdge(10, 7, Directions.DiagonalRightUp)).toEqual([15, 2]);
+    expect(service.moveToEdge(7, 1, Directions.DiagonalRightUp)).toEqual([8, 0]);
+    expect(service.moveToEdge(14, 3, Directions.DiagonalLeftUp)).toEqual([15, 4]);
+    expect(service.moveToEdge(6, 15, Directions.DiagonalLeftUp)).toEqual([6, 15]);
   });
 
   it('should move in the correct direction and not move when it hits an edge', () => {
@@ -124,7 +123,7 @@ describe('CellService', () => {
     service.grid_size = [16, 16];
     service.createGrid();
     service.addWord(4, 4, 'TestWord', 'Test Hint', Directions.Right);
-    service.undoAddition(8);
+    service.undoAddition([[4, 4], [4, 5], [4, 6], [4, 7], [4, 8], [4, 9], [4, 10], [4, 11]]);
     expect(service.cell_grid[4][4].getContent()).toEqual(-1);
     expect(service.cell_grid[4][11].getContent()).toEqual(-1);
     expect(service.cell_grid[4][4].getHints().length).toEqual(0);

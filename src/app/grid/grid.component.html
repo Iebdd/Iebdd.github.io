@@ -1,6 +1,11 @@
 <div class="button">
   <button (click)="fillGrid()">Generate!</button> <br>
-  <button (click)="toggleContent()">@if(hidden_content) {Show Content} @else {Hide Content}</button>
+  <button (click)="toggleContent()">@if(hidden_content) {Show} @else {Hide} Content</button> <br>
+  @if(progress < 100 && loading) {
+    <p>Database is loading, please wait ...</p>
+  } @else if(progress > 100) {
+    <p>Loading finished!</p>
+  }
 </div>
 <table>
   <tbody>
@@ -9,7 +14,7 @@
         @for (rows of columns; track rows) {
             <td [class.blue-border]="rows.isHint()" [class.no-border]="rows.getContent() == -1" [class.hidden]="hidden_content">
 
-              {{rows.getContent() | CharPipe}}
+              {{rows.getContent() | char}}
             </td>
         }
       </tr>
@@ -25,7 +30,7 @@
       <tr>
         @for (rows of columns; track rows) {
           <td>
-            {{rows.getHint(0)}}
+            {{rows.getHint(0) | replacement}}
           </td>
         }
       </tr>

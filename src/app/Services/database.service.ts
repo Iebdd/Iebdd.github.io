@@ -57,17 +57,20 @@ export class DatabaseService {
       .toArray();
   }
 
-  async initDB() {
+  async initDB(): Promise<boolean> {
     let exist: boolean = true;
     await Dexie.exists("Crossword")
       .then(function(exists) {(!exists) ? exist = false : null;})
     await db.open()
       .then(data => console.log("Dexie DB opened"))
       .catch(err => console.log(err.message));
-    (!exist) ? this.createEntries() : null;
+    if(!exist){
+      return true;
+    }
+    return false;
   }
 
-  createEntries() {
+  async createEntries() {
     let word_count: number = 0;
     let curr_entry: Dict_Entry = {
       hint: '',
