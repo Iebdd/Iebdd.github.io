@@ -1,15 +1,9 @@
 import Dexie, { Table } from 'dexie';
 
-
-export interface Occurence {
-  id?: number,
-  ids: number[],
-  occurence: number[]
-}
 export interface Word {
   id?: number,
   hint_id: number,
-  word: string
+  word: number[]
 }
 export interface Hint {
   id?: number,
@@ -17,23 +11,19 @@ export interface Hint {
 }
 
 export class AppDB extends Dexie {
-  Occurences!: Table<Occurence, number>;
   Words!: Table<Word, number>;
   Hints!: Table<Hint, number>;
-
 
   constructor() {
     super('Crossword');
     this.version(1).stores({
-      Words: '++id, hint_id',
+      Words: '++id, hint_id, word*',
       Hints: '++id',
-      Occurences: '++, occurence*',
     });
   }
 
   async resetDatabase() {
-    await db.transaction('rw', 'Occurences', 'Hints', 'Words', () => {
-      this.Occurences.clear();
+    await db.transaction('rw', 'Hints', 'Words', () => {
       this.Hints.clear();
       this.Words.clear();
     });

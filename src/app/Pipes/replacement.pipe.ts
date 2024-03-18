@@ -11,17 +11,16 @@ export class ReplacementPipe implements PipeTransform {
   replacements: string[] = [];
   matches: [number, number][] = [];
 
-  transform(input: string): string {
-  let matches: [number, number][] = [];
-    if(!this.replacements.length) {
+  transform(input: string): string {                        //Replaces placeholders for often repeated strings within the input file according
+    if(!this.replacements.length) {                         //to a provided array. {0} corresponds to the 0th element of the array and so forth
       this.loadDataService.getReplacements()
       .subscribe(element => this.replacements = element);
     }
     if(!input) {
       return '';
     }
-    for ( const match of input.matchAll(/\{(\d\d?\d?)\}/g) ) {
-      if(match.index != undefined) {
+    for ( const match of input.matchAll(/\{(\d\d?\d?)\}/g) ) {      //This construct is necessary since String.replace replacer functions cannot
+      if(match.index != undefined) {                                //access class methods or properties.
         this.matches.push([match.index, parseInt(match[1])]);
       }
     }

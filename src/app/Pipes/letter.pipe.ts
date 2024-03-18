@@ -30,10 +30,10 @@ export class LetterPipe implements PipeTransform {
   readonly UpperBound: number = 50;
   readonly LowerBound: number = 0;
 
-  transform(input: string | number): number {
-    if (typeof input === 'number' && input == -1) {
-      return 0;
-    } 
+  transform(input: string | number): number {           //If input is a string, converts it to ASCII and subtracts 97 to save space or assigns a number
+    if (typeof input === 'number' && input == -1) {     //between 26 and 50 to special characters in multiple languages.
+      return 0;                                         //If input is a number checks if it is the correct format and returns the ASCII representation
+    }                                                   //if it is within the Set of permitted values
     if (typeof input === 'string') {
       input = this.lowerCasePipe.transform(input).charCodeAt(0);
     }

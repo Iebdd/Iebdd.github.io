@@ -20,20 +20,25 @@ export class Cell {
         this.directions = [];
         this.content = -1;
     }
-
-    setContent(new_content: number) {
+    set Content(new_content: number) {
         this.content = new_content;
     }
-
-    setHint(new_hint: string) {
+    set Hint(new_hint: string) {
         this.hints[0] = true;
         this.hints[1].push(new_hint);
     }
-
+    get Content(): number {
+        return this.content;
+    }
+    get Directions(): Directions[] {
+        return this.directions;
+    }
+    get Hints(): string[] {
+        return this.hints[1];
+    }
     addDirection(new_direction: Directions) {
         this.directions.push(new_direction);
     }
-
     removeDirection(rem_index: number) {
         if (rem_index >= this.directions.length) {
             throw new RangeError(`Invalid index: ${rem_index} >= ${this.directions.length}`);
@@ -47,7 +52,6 @@ export class Cell {
         }
         this.directions = this.directions.filter((element, index) => rem_index !== index);
     }
-
     removeHint(rem_index: number) {
         if (rem_index >= this.hints[1].length) {
             throw new RangeError(`Invalid index: ${rem_index} >= ${this.hints[1].length}`);
@@ -64,27 +68,13 @@ export class Cell {
             this.hints[0] = false;
         }
     }
-
-    getContent(): number {
-        return this.content;
-    }
-
-    getDirections(): Directions[] {
-        return this.directions;
-    }
-
-    getDirection(index: number): Directions {
+    getDirectionByIndex(index: number): Directions {
         return this.directions[index];
     }
 
-    getHint(index: number): string {
+    getHintByIndex(index: number): string {
         return this.hints[1][index];
     }
-
-    getHints(): string[] {
-        return this.hints[1];
-    }
-
     isHint(): boolean {
         return this.hints[0];
     }

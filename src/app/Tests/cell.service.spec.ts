@@ -104,9 +104,9 @@ describe('CellService', () => {
     const service = ngMocks.get(CellService);
     service.grid_size = [16, 16];
     service.createGrid();
-    service.cell_grid[8][8].setContent(0);
-    service.cell_grid[7][7].setContent(0);
-    service.cell_grid[9][8].setContent(0);
+    service.cell_grid[8][8].Content = 0;
+    service.cell_grid[7][7].Content = 0;
+    service.cell_grid[9][8].Content = 0;
     expect(service.returnPeripheryResult(8, 7, Directions.Left, true)).toBeFalse();
     expect(service.returnPeripheryResult(9, 7, Directions.Left)).toBeTrue();
     expect(service.returnPeripheryResult(7, 8, Directions.Right)).toBeFalse();
@@ -124,9 +124,9 @@ describe('CellService', () => {
     service.createGrid();
     service.addWord(4, 4, 'TestWord', 'Test Hint', Directions.Right);
     service.undoAddition([[4, 4], [4, 5], [4, 6], [4, 7], [4, 8], [4, 9], [4, 10], [4, 11]]);
-    expect(service.cell_grid[4][4].getContent()).toEqual(-1);
-    expect(service.cell_grid[4][11].getContent()).toEqual(-1);
-    expect(service.cell_grid[4][4].getHints().length).toEqual(0);
-    expect(service.cell_grid[4][4].getDirections().length).toEqual(0);
+    expect(service.cell_grid[4][4].Content).toEqual(-1);
+    expect(service.cell_grid[4][11].Content).toEqual(-1);
+    expect(service.cell_grid[4][4].Hints.length).toEqual(0);
+    expect(service.cell_grid[4][4].Directions.length).toEqual(0);
   });
 });

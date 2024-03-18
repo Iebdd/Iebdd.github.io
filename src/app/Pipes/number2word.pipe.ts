@@ -2,10 +2,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { CharPipe } from './char.pipe';
 
 @Pipe({
-    name: 'occ2word',
+    name: 'number2word',
     standalone: true,
 })
-export class Occ2WordPipe implements PipeTransform {
+export class Number2WordPipe implements PipeTransform {
 
   constructor(private charPipe: CharPipe) {}
 

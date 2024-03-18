@@ -10,7 +10,7 @@ export class CharPipe implements PipeTransform {
 
   constructor(private upperCasePipe: UpperCasePipe, private letterPipe: LetterPipe) {}
 
-  transform(char: number, toUpper: boolean = true): string {
+  transform(char: number, toUpper: boolean = true): string {  //Return the Unicode representation of the LetterPipe generated numbers
     return (toUpper) ? this.upperCasePipe.transform(String.fromCharCode(this.letterPipe.transform(char))) : String.fromCharCode(this.letterPipe.transform(char));
   }
 

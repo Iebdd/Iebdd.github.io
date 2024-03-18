@@ -13,17 +13,10 @@ export class DatabaseService {
   constructor(private LetterPipe: LetterPipe,
               private LoadDataService: LoadDataService) { }
 
-  async addWord(word: string, hint_id: number) {
+  async addWord(word: number[], hint_id: number) {
     db.Words.add({
       word: word,
       hint_id: hint_id
-    })
-  }
-
-  async addOccurence(ids: number[], occurence: number[]) {
-    db.Occurences.add({
-      ids: ids,
-      occurence: occurence
     })
   }
 
@@ -50,9 +43,9 @@ export class DatabaseService {
     });
   }
 
-  async getOccurences(letter: number) {
-    return db.Occurences
-      .where('occurence')
+  async getWordsByLetter(letter: number) {
+    return db.Words
+      .where('word')
       .equals(letter)
       .toArray();
   }
@@ -70,7 +63,7 @@ export class DatabaseService {
     return false;
   }
 
-  async createEntries() {
+/*   async createEntries() {
     let word_count: number = 0;
     let curr_entry: Dict_Entry = {
       hint: '',
@@ -87,6 +80,28 @@ export class DatabaseService {
           occs_buffer.push(this.LetterPipe.transform(curr_entry.words[words][occs]));
         }
         this.addOccurence([hints, word_count], occs_buffer);
+        word_count++;
+        occs_buffer.length = 0;
+      }
+    }
+  } */
+
+  async createEntries() {
+    let word_count: number = 0;
+    let curr_entry: Dict_Entry = {
+      hint: '',
+      words: []
+    };
+    let occs_buffer: number[] = [];
+    let hint_no: number = this.LoadDataService.getLength();
+    for (let hints = 0; hints < hint_no; hints++) {
+      curr_entry = this.LoadDataService.getFragment(hints);
+      this.addHint(curr_entry.hint);
+      for (let words = 0; words < curr_entry.words.length; words++) {
+        for(let occs = 0; occs < curr_entry.words[words].length; occs++) {
+          occs_buffer.push(this.LetterPipe.transform(curr_entry.words[words][occs]));
+        }
+        this.addWord(occs_buffer, hints);
         word_count++;
         occs_buffer.length = 0;
       }

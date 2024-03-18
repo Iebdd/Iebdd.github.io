@@ -1,16 +1,16 @@
-import { Occ2WordPipe } from '../Pipes/occ2word.pipe';
+import { Number2WordPipe } from '../Pipes/number2word.pipe';
 import { CharPipe } from '../Pipes/char.pipe';
 import { MockBuilder, ngMocks} from 'ng-mocks';
 
-describe('Occ2WordPipe', () => {
+describe('Number2WordPipe', () => {
 
     beforeEach(() => {
-      return MockBuilder(Occ2WordPipe)
+      return MockBuilder(Number2WordPipe)
       .keep(CharPipe)
     });
 
   it('create an instance', () => {
-    const pipe = ngMocks.get(Occ2WordPipe)
+    const pipe = ngMocks.get(Number2WordPipe)
     expect(pipe).toBeTruthy();
   });
 });

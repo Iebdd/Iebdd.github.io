@@ -35,7 +35,7 @@ export class GridComponent implements OnInit, OnDestroy {
   }
 
   getGrid(): void {
-    this.cellService.getGrid()
+    this.cellService.Grid
     .pipe(takeUntil(this.destroyed))
     .subscribe(grid => {
       this.cell_grid = grid

@@ -1,5 +1,7 @@
-import { Component} from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { GridComponent } from './grid/grid.component';
+import { TranslocoService } from '@ngneat/transloco';
+
 
 @Component({
     selector: 'app-root',
@@ -8,13 +10,17 @@ import { GridComponent } from './grid/grid.component';
     standalone: true,
     imports: [GridComponent]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
   String = String;
   
 
-  constructor () {}
+  constructor (private translocoService: TranslocoService) {}
   title = 'Crossword_Maker';
+
+  ngOnInit() {
+
+  }
 
 }
 

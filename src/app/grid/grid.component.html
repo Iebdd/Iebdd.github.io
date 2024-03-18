@@ -1,5 +1,5 @@
 <div class="button">
-  <button (click)="fillGrid()">Generate!</button> <br>
+  <button (click)="fillGrid()" [disabled]="loading && progress < 100">Generate!</button> <br>
   <button (click)="toggleContent()">@if(hidden_content) {Show} @else {Hide} Content</button> <br>
   @if(progress < 100 && loading) {
     <p>Database is loading, please wait ...</p>
@@ -12,9 +12,9 @@
     @for (columns of cell_grid; track columns) {
       <tr>
         @for (rows of columns; track rows) {
-            <td [class.blue-border]="rows.isHint()" [class.no-border]="rows.getContent() == -1" [class.hidden]="hidden_content">
+            <td [class.blue-border]="rows.isHint()" [class.no-border]="rows.Content == -1" [class.hidden]="hidden_content">
 
-              {{rows.getContent() | char}}
+              {{rows.Content | char}}
             </td>
         }
       </tr>
@@ -30,7 +30,7 @@
       <tr>
         @for (rows of columns; track rows) {
           <td>
-            {{rows.getHint(0) | replacement}}
+            {{rows.getHintByIndex(0) | replacement}}
           </td>
         }
       </tr>
@@ -44,7 +44,7 @@
       <tr>
         @for (rows of columns; track rows) {
           <td>
-            {{rows.getDirection(0)}}
+            {{rows.getDirectionByIndex(0)}}
           </td>
         }
       </tr>
