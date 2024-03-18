@@ -21,10 +21,10 @@ export class CellService {
   constructor(private letterPipe: LetterPipe,
               private databaseService: DatabaseService,
               private rndIntPipe: RndIntPipe,
-              private number2WordPipe: Number2WordPipe,
               private charPipe: CharPipe,
               private lowerCasePipe: LowerCasePipe,
-              private translocoService: TranslocoService) { }
+              private translocoService: TranslocoService,
+              private number2WordPipe: Number2WordPipe) { }
   grid_size: number[] = [16, 16];
   cell_grid: Cell[][] = [];
   filled_cells: [number, number][] = [];
