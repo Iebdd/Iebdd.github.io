@@ -39,6 +39,8 @@ testem.log
 */environments/*
 src/assets/Data/*.JPG
 src/assets/Data/*.txt
+src/assets/Data/*.xlsx
+src/assets/Data/Backup/*
 
 # System files
 .DS_Store

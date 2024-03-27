@@ -28,14 +28,17 @@ export class CellService {
   grid_size: number[] = [16, 16];
   cell_grid: Cell[][] = [];
   filled_cells: [number, number][] = [];
+  curated_cells: [number, number][] = [];
+  skips: number[] = [0, 0, 0, 0, 0, 0];
   hint_cells: [number, number][] = [];
   match: string = '';
   timeouterror: string = '';
+  regex: string = '';
   TimeoutError = Error(this.timeouterror);
 
   readonly N0Directions: number = 7;
 
-  private grid_state = new BehaviorSubject<number[]>([this.grid_size[0], this.grid_size[1]]);
+  private grid_state$ = new BehaviorSubject<number[]>([this.grid_size[0], this.grid_size[1]]);
 
   setGridSize(column: number, row?: number): void {     //Limits grid size to 64 x 64 and reduces all dimensions to that value if they are higher
     if (row) {
@@ -62,13 +65,13 @@ export class CellService {
     for (let columns = 0; columns < this.grid_size[0]; columns++) {
       this.cell_grid[columns] = new Array<Cell>;
       for (let rows = 0; rows < this.grid_size[1]; rows++) {
-        this.cell_grid[columns][rows] = new Cell(-1, columns, rows);
+        this.cell_grid[columns][rows] = new Cell(-1);
       }
     }
   }
 
   getGridSize(): Observable<number[]> {
-    return this.grid_state.asObservable();
+    return this.grid_state$.asObservable();
   }
 
   get Grid(): Observable<Cell[][]> {
@@ -86,6 +89,7 @@ export class CellService {
   }
 
   async fillGrid(options: Options) {
+    const start = performance.now();
     let word: Word = {
       id: -1,
       hint_id: -1,
@@ -96,101 +100,206 @@ export class CellService {
     let hint: string = '';
     let cursor: [number, number] = [ColRow.Empty, ColRow.Empty];
     let next_cursor: [number, number] = [-1, -1];
+    let cursor_index: number = 0;
     let next_direction: Directions = Directions.Left;
-    let word_count: number = 0;
-    let matching_arrays: number[] = [];
-    let parameter_found: boolean[] = [false, false];
+    let match_string: string = '';
+    let word_count: number = 1;
+    let matching_array: number[] = [];
+    let parameter_found: boolean = false;
     let timeout: number = 0;
     let pivot_letter: number = -1;
+    let pivot_index: number = -1;
     let max_directions: number = this.getDirectionArray(options.directions).length;
+    let previous_array_size: number = 0;
+    let retry: number = 0;
     this.emptyGrid();
     await this.addStartingWord(options.directions);
 
-    while (word_count <= options.n0words) {     
-      parameter_found = [false, false];
+    while (word_count < options.n0words) {    
+      if(previous_array_size !== this.filled_cells.length) {
+        console.log(this.filled_cells);
+      }
+      retry = 0;
+      previous_array_size = this.filled_cells.length;
+      parameter_found = false;
       filtered_words.length = 0;
-      cursor = this.filled_cells[this.rndIntPipe.transform(this.filled_cells.length - 1)];
-      if(this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Hints.length >= max_directions) {
+      cursor_index = this.rndIntPipe.transform(this.filled_cells.length - 1)
+      cursor = this.filled_cells[cursor_index];
+      if(this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions.length >= max_directions) {
+        console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]} because of max directions while ${(next_direction === 3) ? 'going right' : 'going down'}.`);
+        this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
+        this.skips[0]++;
         continue;
       }
       next_direction = this.getNextDirection(options.directions);
       if (this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions.includes(next_direction)) {
-        continue;
+        this.skips[1]++;
+        this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].addIneligibility(next_direction);
+        next_direction = this.getDifferentDirection(this.getDirectionArray(options.directions), this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions);
       }
       if(!this.checkAdjacentCells(cursor[ColRow.Column], cursor[ColRow.Row], next_direction)) {
-        console.log('Its happening');
+        if(this.checkEligibility(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, max_directions)) {
+          console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]} because of filled adjacent cells while ${(next_direction === 3) ? 'going right' : 'going down'}.`);
+          this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
+        }
+        this.skips[2]++
         continue;
       }
       pivot_letter = this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content;
-      matching_arrays = this.createMatchingArrays(cursor[ColRow.Column], cursor[ColRow.Row], next_direction);
+      matching_array = this.createMatchingArray(cursor[ColRow.Column], cursor[ColRow.Row], next_direction);
       await this.databaseService.getWordsByLetter(this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content)
         .then((result) => words = result)
-        .catch((error) => alert('Cannot get Occurences' + error));
-      filtered_words = this.filterOccurences(words, matching_arrays, cursor, next_direction);
-      if(filtered_words.length > 0) {
-        word = this.chooseWord(filtered_words)
-        await this.databaseService.getHint(word.hint_id + 1)
-          .then((result) => hint = result!.hint)
-          .catch((error) => alert('Cannot get Hint:' + error));
-        next_cursor = this.findStartingPoint(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, this.lowerCasePipe.transform(this.number2WordPipe.transform(word.word)), pivot_letter);
-        parameter_found[Parameters.Periphery] = this.checkPeriphery(next_cursor[ColRow.Column], next_cursor[ColRow.Row], word.word.length, next_direction);
-        if(!parameter_found[Parameters.Periphery]) {
+        .catch((error) => alert('Cannot get Words' + error));
+      do {
+        match_string = this.createRegexMatcher(matching_array);
+        pivot_index = this.getPivotIndex(cursor[0], cursor[1], next_direction, match_string);
+        filtered_words = this.filterOccurences(words, match_string, pivot_index);
+        if(filtered_words.length > 0) {
+          word = this.chooseWord(filtered_words)
+          await this.databaseService.getHint(word.hint_id + 1)
+            .then((result) => hint = result!.hint)
+            .catch((error) => alert('Cannot get Hint:' + error));
+          next_cursor = this.findStartingPoint(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, this.lowerCasePipe.transform(this.number2WordPipe.transform(word.word)), pivot_letter);
+          if(next_cursor[0] === -1 || next_cursor[1] === -1) {
+            this.skips[3]++;
+            retry = 1;
+            break;
+          }
+        }
+        [matching_array, retry] = this.getViability(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, matching_array, pivot_letter, retry, filtered_words.length !== 0, 4);
+        if (retry === -1) {
+          break;
+        } else if(retry) {
           continue;
         }
+        parameter_found = this.checkPeriphery(next_cursor[ColRow.Column], next_cursor[ColRow.Row], word.word.length, next_direction);
+        [matching_array, retry] = this.getViability(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, matching_array, pivot_letter, retry, parameter_found, 5);
+        if(retry === -1) {
+          break;
+        }
+      } while (retry)
+
+      if(retry === -1) {
+        if(this.checkEligibility(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, max_directions)) {
+          console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]}.`);
+          this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
+        }
+        continue;
       }
+      cursor = next_cursor;
       if (timeout > 500) {
+        this.logAttempt(word_count, (performance.now() - start) / 1000, false);
         throw this.TimeoutError;
       }
       if(timeout > 0 && timeout % 100 === 0) {
         console.log(`Timeout: ${timeout}/500`);
       }
-      timeout++;
-      cursor = next_cursor;
-      if (filtered_words.length === 0) {
-        continue;
-      }
-      console.log(`Word Nr.${word_count + 2}: ${word.word}`);
+      console.log(`Word Nr.${word_count + 1}: ${this.number2WordPipe.transform(word.word)}`);
       if(this.addWord(cursor[ColRow.Column], cursor[ColRow.Row], this.number2WordPipe.transform(word.word), hint, next_direction)) {
         word_count++;
       }
+    }
+    this.logAttempt(word_count, (performance.now() - start) / 1000, true);
+  }
+
+  getViability(column: number, row: number, direction: Directions, matching_array: number[], pivot_letter: number, retry: number, success: boolean, skips_type: number): [number[], number] {
+    console.log(`Success? ${(success) ? 'yes!' : 'no :('}`);
+    if(!success) {  
+      if(matching_array[matching_array.length - 1] === pivot_letter  || matching_array[0] === pivot_letter) {
+        if (retry === 1) {
+          console.log("We're doing it from the other side!");
+          matching_array = this.shortenToPivot(column, row, direction, this.getMaxLength(column, row, this.invertDirection(direction)) - 1, true);
+          return [matching_array, 2];
+        } else {
+          this.skips[skips_type]++;
+          return [matching_array, -1];
+        }
+  
+      } else {
+        console.log("We're doing this!");
+        matching_array = this.shortenToPivot(column, row, direction, this.getMaxLength(column, row, this.invertDirection(direction)) - 1, false);
+        retry = 1;
+        return [matching_array, 1]
+      }
+    }
+    return [matching_array, 0]
+  }
+
+  shortenToPivot(column: number, row: number, direction: Directions, max: number, min: boolean): number[] {
+    let max_length: number = this.getMaxLength(column, row, this.invertDirection(direction)) - 1
+    return (max !== -1) ? this.createMatchingArray(column, row, direction, max_length) : this.createMatchingArray(column, row, direction, -1, min);
+  }
+
+  logAttempt(word_count: number, time: number, finished: boolean) {
+    if(finished) {
+      console.log(`Finished adding ${word_count} words after ${time} seconds.`);
+    } else {
+      console.log(`Given up on grid after ${time} seconds with ${word_count} found words.`)
+    }
+    console.log(`Skipped ${this.skips[0]} times due to insufficient directions.`);
+    console.log(`Skipped ${this.skips[1]} times due to to duplicate directions.`);
+    console.log(`Skipped ${this.skips[2]} times due to full adjacent cells.`);
+    console.log(`Skipped ${this.skips[3]} times due to an invalid periphery.`);
+    console.log(`Skipped ${this.skips[4]} times due to no valid matches.`);
+  }
+
+  checkEligibility(column: number, row: number, direction: Directions, max_directions: number): boolean {
+    let invalid_directions: Directions[] = this.cell_grid[column][row].Eligibility;
+    if (invalid_directions.includes(direction)) {
+      return (invalid_directions.length >= max_directions) ? true : false;
+    } else {
+      this.cell_grid[column][row].addIneligibility(direction);
+      return (invalid_directions.length >= max_directions) ? true : false;
+    }
+  }
+
+  removeElement<Type>(index: number, elements: Type[]): Type[] {
+    if (elements.length - 1 === index) {
+        return elements.slice(0, index);
+    } else if (index === 0) {
+      return elements.slice(1, elements.length);
+    } else {
+      return elements.slice(0, index).concat(elements.slice(index + 1, elements.length));
     }
   }
 
   checkPeriphery(column: number, row: number, word_length: number, direction: Directions): boolean { //Checks the content of directly adjacent cells
     let cursor: [number, number] = [column, row];                                                    //returning true if they are all empty and false
     if(!this.returnPeripheryResult(cursor[0],cursor[1], direction, true)) {                          //if any of them are occupied.
-      return false;
+    return false;
     }
     cursor = this.move(cursor[0], cursor[1], direction);
     for(let length = 1; length < word_length - 1; length++) {
       if(!this.returnPeripheryResult(cursor[0], cursor[1], direction)) {
-          return false;
+    return false;
         }
       cursor = this.move(cursor[0], cursor[1], direction);
     }
     if(!this.returnPeripheryResult(cursor[0], cursor[1], direction, false, true)) {
-      return false;
+    return false;
     }
     return true;
   }
 
   returnPeripheryResult(column: number, row: number, direction: Directions, first: boolean = false, last: boolean = false): boolean {
+    let max_columns: number = this.grid_size[0] - 1;
+    let max_rows: number = this.grid_size[1] - 1;
     if (this.cell_grid[column][row].Content !== -1) {
       return true;
     }
     let directions: number[] = [-1, -1, -1, -1]     /* Up, Left, Right, Down */
     if(direction >= Directions.DiagonalLeft || direction <= Directions.Right) {
       (column != 0) ? directions[0] = this.cell_grid[column - 1][row].Content : null;
-      (column < this.grid_size[0] - 1) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
+      (column < max_columns) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
     }
     if(direction >= Directions.Down) {
       (row != 0) ? directions[1] = this.cell_grid[column][row - 1].Content : null;
-      (row < this.grid_size[1] - 1) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
+      (row < max_rows) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
     }
     switch(direction) {
       case Directions.Left:
         if (first) {
-          (row < this.grid_size[1] - 1) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
+          (row < max_rows) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
         } else if (last) {
           (row != 0) ? directions[1] = this.cell_grid[column][row - 1].Content : null;
         }
@@ -199,12 +308,12 @@ export class CellService {
         if (first) {
           (row != 0) ? directions[1] = this.cell_grid[column][row - 1].Content : null;
         } else if (last) {
-          (row < this.grid_size[1] - 1) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
+          (row < max_rows) ? directions[2] = this.cell_grid[column][row + 1].Content : null;
         }
       break;
       case Directions.Up:
         if (first) {
-          (column < this.grid_size[0] - 1) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
+          (column < max_columns) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
         } else if (last) {
           (column != 0) ? directions[0] = this.cell_grid[column - 1][row].Content : null;
         }
@@ -213,7 +322,7 @@ export class CellService {
         if (first) {
           (column != 0) ? directions[0] = this.cell_grid[column - 1][row].Content : null;
         } else if (last) {
-          (column < this.grid_size[0] - 1) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
+          (column < max_columns) ? directions[3] = this.cell_grid[column + 1][row].Content : null;
         }
       break;
       }
@@ -263,7 +372,7 @@ export class CellService {
         success = true;
       }
     }
-    console.log(`Word Nr.1: ${word.word}`);
+    console.log(`Word Nr.1: ${this.number2WordPipe.transform(word.word)}`);
     this.addWord(cursor[ColRow.Column], cursor[ColRow.Row], this.number2WordPipe.transform(word.word), hint, next_direction);
   }
 
@@ -271,6 +380,7 @@ export class CellService {
     let min_length: number = Math.min(Math.floor(this.grid_size[0] / 2), Math.floor(this.grid_size[1] / 2));
     return words.filter((element) => element.word.length >= min_length);
   }
+
   checkAdjacentCells(column: number, row: number, direction: Directions): boolean { //Checks the immediate vicinity of the cell based on the intended direction
     let max_columns: number = this.grid_size[0] - 1;
     let max_rows: number = this.grid_size[1] - 1;
@@ -387,15 +497,13 @@ export class CellService {
       (cursor[0] !== end_cursor[0]) ? ++cursor[0] : null;
       (cursor[1] !== end_cursor[1]) ? ++cursor[1] : null;
     }
-    throw new RangeError(`No suitable position for word: ${word}. Pivot: ${column}, ${row}`);
+    return [-1, -1];
   }
 
-  filterOccurences(words: Word[], matching_array: number[], cursor: [number, number], direction: Directions): Word[] {
-    let match_string: string = this.createRegexMatcher(matching_array);   
+  filterOccurences(words: Word[], match_string: string, pivot_index: number): Word[] {
     let match_buffer: [string, boolean] = ['', false];
     let start: boolean = false;
     let attempting: boolean = true;
-    let pivot_index: number = this.getPivotIndex(cursor[0], cursor[1], direction, match_string);
     let indp_letters: number[] = this.findIndependentLetters(match_string); 
     let filtered_occurences: Word[] = [];
     match_buffer[0] = match_string;
@@ -475,17 +583,26 @@ export class CellService {
         regex += this.charPipe.transform(matching_arrays[match_iterator], false); //Adds the letter when encountered
       }
     }
+    if(regex != this.regex) {
+      console.log(regex);
+    }
+    this.regex = regex;
     return regex;
   }
 
-  createMatchingArrays(column: number, row: number, direction: Directions): number[] {  //Iterates over the slice of the grid, returning an array of its values
+  createMatchingArray(column: number, row: number, direction: Directions, max_length: number = -1, min_length: boolean = false): number[] {  //Iterates over the slice of the grid, returning an array of its values
     let cursor: [number, number] = this.moveToEdge(column, row, direction);
-    let max_length = this.getMaxLength(cursor[ColRow.Column], cursor[ColRow.Row], direction) - 1;
-    let side_buffer: [number, number] = [-1, -1];
+    let cell_iterator: number = 0;
+    if(max_length === -1 && min_length) {
+      throw new Error(`Unauthorised variable combination at ${column}, ${row} going ${(direction === 3) ? 'right' : 'down'}.`);
+    }
+    if (max_length === -1 || min_length) {
+      max_length = this.getMaxLength(cursor[ColRow.Column], cursor[ColRow.Row], direction) - 1;
+      (min_length) ? cell_iterator = max_length : null;
+    }
     let matching_arrays: number[] = [];
-    for (let cell_iterator = 0; cell_iterator <= max_length; cell_iterator++) {
+    for (cell_iterator; cell_iterator <= max_length; cell_iterator++) {
       matching_arrays.push(this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content);
-      side_buffer = this.returnPeriphery(cursor[ColRow.Column], cursor[ColRow.Row], direction);
       cursor = this.move(cursor[ColRow.Column], cursor[ColRow.Row], direction);
     }
     return matching_arrays;
@@ -498,6 +615,12 @@ export class CellService {
   getNextDirection(options: boolean[]): Directions {
     let direction_array: Directions[] = this.getDirectionArray(options);
     return direction_array[Math.ceil(Math.random() * direction_array.length - 1)];
+  }
+
+  getDifferentDirection(directions: Directions[], invalid_directions: Directions[]): Directions {
+    let valid_directions: Directions[] = [];
+    directions.forEach((direction) => (invalid_directions.includes(direction)) ? null : valid_directions.push(direction));
+    return valid_directions[this.rndIntPipe.transform(valid_directions.length)];
   }
 
   getDirectionArray(options: boolean[]): Directions[] {
@@ -542,11 +665,11 @@ export class CellService {
       to_be_filled.push([cursor[ColRow.Column], cursor[ColRow.Row]])
       cursor = this.move(cursor[ColRow.Column], cursor[ColRow.Row], direction);
     }
-    this.filled_cells = this.filled_cells.concat(to_be_filled)
+    this.filled_cells = this.filled_cells.concat(to_be_filled);
     return true;
   }
 
-  undoAddition(to_be_deleted: [number, number][]) {
+  undoAddition(to_be_deleted: [number, number][]): void {
     let cursor: [number, number] = [-1, -1];
     let n0hints: number = this.cell_grid[to_be_deleted[0][0]][to_be_deleted[0][1]].Hints.length;
     if(to_be_deleted.length > 1) {
@@ -655,6 +778,10 @@ export class CellService {
       case Directions.DiagonalLeftUp:
         return (distances.up < distances.left) ? column + 1 : row + 1;
     }
+  }
+
+  getSkips(): Observable<number[]> {
+    return of(this.skips);
   }
 
   checkValidity(column: number, row: number, steps: number = 1, direction?: Directions): number {

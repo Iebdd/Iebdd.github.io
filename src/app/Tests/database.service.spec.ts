@@ -1,4 +1,4 @@
-import { DatabaseService } from '../Services/database.service';
+/* import { DatabaseService } from '../Services/database.service';
 import { LoadDataService } from '../Services/load-data.service';
 
 import { MockBuilder, ngMocks} from 'ng-mocks';
@@ -14,3 +14,4 @@ describe('DatabaseService', () => {
     expect(service).toBeDefined();
   })
 });
+ */

@@ -2,17 +2,15 @@ import { Directions } from './enums';
 
 export class Cell {
     private content: number;
-    private column: number;
-    private row: number;
     private hints: [boolean, string[]];
     private directions: Directions[];
+    private ineligible: Directions[];
 
-    constructor(content: number, column: number, row: number) {
+    constructor(content: number) {
         this.content = content;
-        this.column = column;
-        this.row = row;
         this.hints = [false, []];
         this.directions = [];
+        this.ineligible = [];
     }
 
     reInit() {
@@ -35,6 +33,14 @@ export class Cell {
     }
     get Hints(): string[] {
         return this.hints[1];
+    }
+
+    get Eligibility(): Directions[] {
+        return this.ineligible;
+    }
+
+    addIneligibility(direction: Directions) {
+        this.ineligible.push(direction);
     }
     addDirection(new_direction: Directions) {
         this.directions.push(new_direction);

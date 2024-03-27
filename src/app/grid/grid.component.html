@@ -2,10 +2,16 @@
   <button (click)="fillGrid()" [disabled]="loading && progress < 100">Generate!</button> <br>
   <button (click)="toggleContent()">@if(hidden_content) {Show} @else {Hide} Content</button> <br>
   @if(progress < 100 && loading) {
-    <p>Database is loading, please wait ...</p>
+    <p>Database is loading. Please wait...</p>
   } @else if(progress > 100) {
     <p>Loading finished!</p>
   }
+  <p>Skipped {{skips[0]}} times due to maximum directions.</p>
+  <p>Skipped {{skips[1]}} times due to duplicate directions.</p>
+  <p>Skipped {{skips[2]}} times due to an invalid periphery.</p>
+  <p>Skipped {{skips[3]}} times due to a bad starting point.</p>
+  <p>Skipped {{skips[4]}} times due to an invalid extended periphery.</p>
+  <p>Skipped {{skips[5]}} times due to an empty match array.</p>
 </div>
 <table>
   <tbody>

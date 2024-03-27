@@ -17,7 +17,6 @@ export const enum Directions {
 }
 
 export const enum Parameters {
-    Direction,
     Periphery
 }
 

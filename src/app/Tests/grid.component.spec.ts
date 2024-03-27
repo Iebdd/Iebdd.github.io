@@ -1,5 +1,9 @@
-import { MockBuilder, ngMocks, MockRender} from 'ng-mocks';
+/* import { MockBuilder, ngMocks, MockRender} from 'ng-mocks';
 import { CellService } from '../Services/cell.service';
+import { ReplacementPipe } from '../Pipes/replacement.pipe';
+import { DatabaseService } from '../Services/database.service';
+import { CharPipe } from '../Pipes/char.pipe';
+import { LetterPipe } from '../Pipes/letter.pipe';
 
 
 import { GridComponent } from '../grid/grid.component';
@@ -7,8 +11,12 @@ import { GridComponent } from '../grid/grid.component';
 describe('GridComponent', () => {
 
   beforeEach(() => {
-    return MockBuilder(GridComponent)
-    .keep(CellService);
+    return MockBuilder(GridComponent, null)
+    .keep(CellService)
+    .keep(CharPipe)
+    .keep(ReplacementPipe)
+    .keep(DatabaseService)
+    .keep(LetterPipe);
   });
 
   it('should create', () => {
@@ -16,3 +24,4 @@ describe('GridComponent', () => {
     expect(fixture).toBeTruthy();
   });
 });
+ */

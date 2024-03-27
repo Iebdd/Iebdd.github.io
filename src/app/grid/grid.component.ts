@@ -3,11 +3,11 @@ import { Cell } from '../model/classes';
 import { Options } from '../model/dtypes'; 
 import { CellService } from '../Services/cell.service';
 import { DatabaseService } from '../Services/database.service';
-import { LoadDataService } from '../Services/load-data.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, of } from 'rxjs';
 import { Directions } from '../model/enums';
 import { CharPipe } from '../Pipes/char.pipe';
 import { ReplacementPipe } from '../Pipes/replacement.pipe';
+import { LoadDataService } from '../Services/load-data.service';
 
 @Component({
     selector: 'app-grid',
@@ -26,8 +26,13 @@ export class GridComponent implements OnInit, OnDestroy {
   grid_size: number[] = [];
   destroyed = new Subject<void>();
   hidden_content: boolean = false;
-  loading: boolean = false;
+  loading: boolean = true;
+  empty_db: boolean = true;
+  skips: number[] = [0, 0, 0, 0, 0];
   progress: number = 0;
+  hint_no: number = 0;
+
+  n0elements: number = 0;
 
   options: Options = {
     directions: [true, false, false],
@@ -36,17 +41,14 @@ export class GridComponent implements OnInit, OnDestroy {
 
   getGrid(): void {
     this.cellService.Grid
-    .pipe(takeUntil(this.destroyed))
-    .subscribe(grid => {
-      this.cell_grid = grid
-    });
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(grid => this.cell_grid = grid);
   }
 
   getGridSize(): void {
     this.cellService.getGridSize()
-    .subscribe(size => {
-      this.grid_size = size
-    });
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(size => this.grid_size = size);
   }
 
   fillGrid(): void {
@@ -57,9 +59,34 @@ export class GridComponent implements OnInit, OnDestroy {
     this.hidden_content = !this.hidden_content;
   }
 
-  getLoadingProgress(): void {
-    this.loadDataService.updateLoadingProgress()
-      .subscribe(element => this.progress = element);
+  getLoadingState(): void {
+    this.databaseService.getLoadState()
+      .subscribe(element => this.loading = element);
+  }
+
+  getSkips(): void {
+    this.cellService.getSkips()
+      .subscribe(skips => this.skips = skips);
+  }
+
+  getTotalLength(): void {
+    this.n0elements = this.loadDataService.getTotalLength();
+  }
+
+  async getN0OfHints(): Promise<number> {
+    let hints: number = await this.databaseService.getN0OfHints();
+    return hints;
+  }
+
+  toggleLoad(): void {
+    this.databaseService.toggleLoad();
+  }
+
+  clearDB(): void {
+    this.databaseService.clearDB();
+  }
+
+  isFinished(): void {
   }
 
   populate(): void {
@@ -71,11 +98,17 @@ export class GridComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    this.getLoadingProgress();
+    this.getTotalLength();
+    this.getLoadingState();
     this.databaseService.initDB()
-      .then(element => (element) ? (this.loading = true, this.databaseService.createEntries()) : null);
+      .then(element => (element) ? (this.databaseService.createEntries()
+                                      .then(() => this.getN0OfHints()
+                                        .then(() => this.toggleLoad()))) : null);
     this.getGrid();
     this.getGridSize();
+    this.databaseService.getN0OfWords()
+      .then(number => console.log(`Currently ${number} words in the database.`));
+    this.getSkips();
     this.populate();
   }
 

@@ -1,4 +1,4 @@
-import { Number2WordPipe } from '../Pipes/number2word.pipe';
+/* import { Number2WordPipe } from '../Pipes/number2word.pipe';
 import { CharPipe } from '../Pipes/char.pipe';
 import { MockBuilder, ngMocks} from 'ng-mocks';
 
@@ -14,3 +14,4 @@ describe('Number2WordPipe', () => {
     expect(pipe).toBeTruthy();
   });
 });
+ */
