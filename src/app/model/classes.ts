@@ -2,28 +2,30 @@ import { Directions } from './enums';
 
 export class Cell {
     private content: number;
-    private hints: [boolean, string[]];
+    private hints: [boolean, string[], Directions[], number[]];
     private directions: Directions[];
     private ineligible: Directions[];
 
     constructor(content: number) {
         this.content = content;
-        this.hints = [false, []];
+        this.hints = [false, [], [], []];
         this.directions = [];
         this.ineligible = [];
     }
 
     reInit() {
-        this.hints = [false, []],
+        this.hints = [false, [], [], []],
         this.directions = [];
         this.content = -1;
     }
     set Content(new_content: number) {
         this.content = new_content;
     }
-    set Hint(new_hint: string) {
+    addHint(new_hint: string, direction: Directions, index: number) {
         this.hints[0] = true;
         this.hints[1].push(new_hint);
+        this.hints[2].push(direction);
+        this.hints[3].push(index);
     }
     get Content(): number {
         return this.content;
@@ -35,8 +37,16 @@ export class Cell {
         return this.hints[1];
     }
 
+    get HintIndex() {
+        return this.hints[3];
+    }
+
     get Eligibility(): Directions[] {
         return this.ineligible;
+    }
+
+    get HintN0(): Directions[] {
+        return this.hints[2];
     }
 
     addIneligibility(direction: Directions) {
@@ -66,10 +76,17 @@ export class Cell {
         }
         if (rem_index === 0) {
             this.hints[1].shift();
+            this.hints[2].shift();
+            this.hints[3].shift();
         } else if (rem_index === this.hints[1].length - 1) {
             this.hints[1].pop();
+            this.hints[2].pop();
+            this.hints[3].pop();
+        } else {
+            this.hints[1] = this.hints[1].filter((element, index) => rem_index !== index);
+            this.hints[2] = this.hints[2].filter((element, index) => rem_index !== index);
+            this.hints[3] = this.hints[3].filter((element, index) => rem_index !== index);
         }
-        this.hints[1] = this.hints[1].filter((element, index) => rem_index !== index);
         if(this.hints[1].length === 0) {
             this.hints[0] = false;
         }

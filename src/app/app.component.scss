@@ -1,0 +1,16 @@
+.grid_container {
+    display: grid;
+    grid-template-columns: 20vw 60vw 20vw;
+    grid-template-rows: 50px calc(100vh - 50px);
+    grid-column-gap: 5px;
+}
+
+.main_table {
+    grid-column-start: 2;
+    grid-row-start: 2;
+}
+
+.top_bar {
+    grid-column-start: 1;
+    grid-column-end: 4;
+}

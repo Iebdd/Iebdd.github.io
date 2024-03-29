@@ -16,13 +16,12 @@ export class DatabaseService {
   constructor(private LetterPipe: LetterPipe,
               private LoadDataService: LoadDataService) { }
 
-  progress: number = 0;
   loading$ = new BehaviorSubject<boolean>(true);
-  progress$ = new BehaviorSubject<number>(this.progress);
+  progress$ = new BehaviorSubject<number>(0);
 
 
   async clearDB() {
-    db.resetDatabase();
+    db.deleteDatabase();
   }
 
   async addWord(word: number[], hint_id: number) {
@@ -75,8 +74,10 @@ export class DatabaseService {
     await Dexie.exists("Crossword")
       .then(function(exists) {(!exists) ? exist = false : null;})
     await db.open()
-      .then(data => console.log("Dexie DB opened"))
-      .catch(err => console.log(err.message));
+      .then(() => console.log('DB Opened'))
+      .catch(() => console.log('Error occured while opening DB'));
+    let count: number = Math.min(await this.getN0OfWords(), await this.getN0OfHints());
+    (!count) ? exist = false : null;
     if(!exist){
       return true;
     }
@@ -100,7 +101,7 @@ export class DatabaseService {
     };
     let occs_buffer: number[] = [];
     for (let letters = 0; letters < this.available_letters; letters++) {
-      let hint_no: number = this.LoadDataService.getLength(letters);
+      let hint_no: number = this.LoadDataService.getLengthByIndex(letters);
       for (let hints = 0; hints < hint_no; hints++) {
         curr_entry = this.LoadDataService.getFragment(letters, hints);
         this.addHint(curr_entry.hint);

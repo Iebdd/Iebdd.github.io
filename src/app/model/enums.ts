@@ -16,10 +16,6 @@ export const enum Directions {
     DiagonalLeftUp
 }
 
-export const enum Parameters {
-    Periphery
-}
-
 export const enum ColRow {
     Empty = -1,
     Column,

@@ -22,11 +22,9 @@ export class AppDB extends Dexie {
     });
   }
 
-  async resetDatabase() {
-    await db.transaction('rw', 'Hints', 'Words', () => {
-      this.Hints.clear();
-      this.Words.clear();
-    });
+  async deleteDatabase() {
+    await Dexie.delete('Crossword');
+    await Dexie.delete('__dbnames');
   }
 }
 

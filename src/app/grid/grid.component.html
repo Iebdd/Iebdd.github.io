@@ -1,57 +1,22 @@
 <div class="button">
-  <button (click)="fillGrid()" [disabled]="loading && progress < 100">Generate!</button> <br>
-  <button (click)="toggleContent()">@if(hidden_content) {Show} @else {Hide} Content</button> <br>
-  @if(progress < 100 && loading) {
+  <button (click)="fillGrid()" [disabled]="loading">Generate!</button> <br>
+  <button (click)="toggleLetters()">@if(hidden_letters) {Show} @else {Hide} Content</button> <br>
+  <button (click)="clearDB()">Clear Database</button> <br>
+  @if(loading) {
     <p>Database is loading. Please wait...</p>
-  } @else if(progress > 100) {
-    <p>Loading finished!</p>
   }
-  <p>Skipped {{skips[0]}} times due to maximum directions.</p>
-  <p>Skipped {{skips[1]}} times due to duplicate directions.</p>
-  <p>Skipped {{skips[2]}} times due to an invalid periphery.</p>
-  <p>Skipped {{skips[3]}} times due to a bad starting point.</p>
-  <p>Skipped {{skips[4]}} times due to an invalid extended periphery.</p>
-  <p>Skipped {{skips[5]}} times due to an empty match array.</p>
 </div>
 <table>
   <tbody>
     @for (columns of cell_grid; track columns) {
       <tr>
-        @for (rows of columns; track rows) {
-            <td [class.blue-border]="rows.isHint()" [class.no-border]="rows.Content == -1" [class.hidden]="hidden_content">
-
-              {{rows.Content | char}}
+        @for (row of columns; track row) {
+            <td [class.blue-border]="row.isHint()" [class.no-border]="row.Content == -1" >
+              @for (hint of row.HintIndex; track hint) {
+                <p class="cell_hint {{row.HintN0[$index] | direction}}">{{this.hint}}</p>
+              }
+              <p class="letters" [class.hidden]="hidden_letters">{{row.Content | char}}</p>
             </td>
-        }
-      </tr>
-    }
-  </tbody>
-</table>
-
-
-
-<table>
-  <tbody>
-    @for (columns of cell_grid; track columns) {
-      <tr>
-        @for (rows of columns; track rows) {
-          <td>
-            {{rows.getHintByIndex(0) | replacement}}
-          </td>
-        }
-      </tr>
-    }
-  </tbody>
-</table>
-
-<table>
-  <tbody>
-    @for (columns of cell_grid; track columns) {
-      <tr>
-        @for (rows of columns; track rows) {
-          <td>
-            {{rows.getDirectionByIndex(0)}}
-          </td>
         }
       </tr>
     }

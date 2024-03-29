@@ -13,7 +13,7 @@ export class ReplacementPipe implements PipeTransform {
 
   transform(input: string): string {                        //Replaces placeholders for often repeated strings within the input file according
     if(!this.replacements.length) {                         //to a provided array. {0} corresponds to the 0th element of the array and so forth
-      this.loadDataService.getReplacements()
+      this.loadDataService.replacements
       .subscribe(element => this.replacements = element);
     }
     if(!input) {

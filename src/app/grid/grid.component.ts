@@ -8,13 +8,14 @@ import { Directions } from '../model/enums';
 import { CharPipe } from '../Pipes/char.pipe';
 import { ReplacementPipe } from '../Pipes/replacement.pipe';
 import { LoadDataService } from '../Services/load-data.service';
+import { DirectionPipe } from '../Pipes/direction.pipe';
 
 @Component({
     selector: 'app-grid',
     templateUrl: './grid.component.html',
     styleUrls: ['./grid.component.scss'],
     standalone: true,
-    imports: [CharPipe, ReplacementPipe]
+    imports: [CharPipe, ReplacementPipe, DirectionPipe]
 })
 export class GridComponent implements OnInit, OnDestroy {
 
@@ -25,7 +26,7 @@ export class GridComponent implements OnInit, OnDestroy {
   cell_grid: Cell[][] = [];
   grid_size: number[] = [];
   destroyed = new Subject<void>();
-  hidden_content: boolean = false;
+  hidden_letters: boolean = false;
   loading: boolean = true;
   empty_db: boolean = true;
   skips: number[] = [0, 0, 0, 0, 0];
@@ -35,8 +36,8 @@ export class GridComponent implements OnInit, OnDestroy {
   n0elements: number = 0;
 
   options: Options = {
-    directions: [true, false, false],
-    n0words: 15
+    directions: [true, false, false],   //Add as many words as possible, while going right and down;
+    n0words: 99 
   }
 
   getGrid(): void {
@@ -55,8 +56,8 @@ export class GridComponent implements OnInit, OnDestroy {
     this.cellService.fillGrid(this.options);
   }
 
-  toggleContent(): void {
-    this.hidden_content = !this.hidden_content;
+  toggleLetters(): void {
+    this.hidden_letters = !this.hidden_letters;
   }
 
   getLoadingState(): void {
@@ -70,12 +71,13 @@ export class GridComponent implements OnInit, OnDestroy {
   }
 
   getTotalLength(): void {
-    this.n0elements = this.loadDataService.getTotalLength();
+    this.n0elements = this.loadDataService.totalLength;
   }
 
-  async getN0OfHints(): Promise<number> {
-    let hints: number = await this.databaseService.getN0OfHints();
-    return hints;
+  async getN0OfWords(): Promise<number> {
+    let words: number = await this.databaseService.getN0OfWords();
+    console.log(`Currently ${words} words in the database.`)
+    return words;
   }
 
   toggleLoad(): void {
@@ -102,12 +104,10 @@ export class GridComponent implements OnInit, OnDestroy {
     this.getLoadingState();
     this.databaseService.initDB()
       .then(element => (element) ? (this.databaseService.createEntries()
-                                      .then(() => this.getN0OfHints()
-                                        .then(() => this.toggleLoad()))) : null);
+                                      .then(() => this.getN0OfWords()              //Creates a final db query after having sent all 
+                                        .then(() => this.toggleLoad()))) : null);  //add queries to only return once db creation has finished.
     this.getGrid();
     this.getGridSize();
-    this.databaseService.getN0OfWords()
-      .then(number => console.log(`Currently ${number} words in the database.`));
     this.getSkips();
     this.populate();
   }

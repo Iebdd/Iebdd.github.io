@@ -1,5 +1,7 @@
 import { Component, OnInit} from '@angular/core';
 import { GridComponent } from './grid/grid.component';
+import { TopBarComponent } from './top-bar/top-bar.component';
+import { ControlPanelComponent } from './control-panel/control-panel.component';
 import { TranslocoService } from '@ngneat/transloco';
 
 
@@ -8,7 +10,7 @@ import { TranslocoService } from '@ngneat/transloco';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     standalone: true,
-    imports: [GridComponent]
+    imports: [GridComponent, TopBarComponent, ControlPanelComponent]
 })
 export class AppComponent implements OnInit {
 

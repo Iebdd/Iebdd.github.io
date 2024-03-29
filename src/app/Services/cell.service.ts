@@ -2,7 +2,7 @@ import { Injectable} from '@angular/core';
 import { BehaviorSubject, of, Observable } from 'rxjs';
 import { Word } from '../../db/db'; 
 import { Options } from '../model/dtypes'; 
-import { Directions, Parameters, ColRow} from '../model/enums';
+import { Directions, ColRow} from '../model/enums';
 import { Cell, AdjacentContent, Edges } from '../model/classes';
 import { LetterPipe } from '../Pipes/letter.pipe';
 import { CharPipe } from '../Pipes/char.pipe';
@@ -33,8 +33,11 @@ export class CellService {
   hint_cells: [number, number][] = [];
   match: string = '';
   timeouterror: string = '';
+  insufficientwordserror: string = '';
   regex: string = '';
+  debug: boolean = true;
   TimeoutError = Error(this.timeouterror);
+  InsufficientWords = Error(this.insufficientwordserror)
 
   readonly N0Directions: number = 7;
 
@@ -85,6 +88,7 @@ export class CellService {
         this.cell_grid[columns][rows].reInit();
       }
     }
+    this.hint_cells.length = 0;
     this.filled_cells.length = 0;
   }
 
@@ -112,12 +116,19 @@ export class CellService {
     let max_directions: number = this.getDirectionArray(options.directions).length;
     let previous_array_size: number = 0;
     let retry: number = 0;
+    if(!await this.checkWordAmount()) {
+      throw this.InsufficientWords;
+    }
     this.emptyGrid();
     await this.addStartingWord(options.directions);
 
     while (word_count < options.n0words) {    
       if(previous_array_size !== this.filled_cells.length) {
         console.log(this.filled_cells);
+      }
+      if (!this.filled_cells.length) {
+        this.logAttempt(word_count, (performance.now() - start) / 1000, true);
+        return;
       }
       retry = 0;
       previous_array_size = this.filled_cells.length;
@@ -126,23 +137,20 @@ export class CellService {
       cursor_index = this.rndIntPipe.transform(this.filled_cells.length - 1)
       cursor = this.filled_cells[cursor_index];
       if(this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions.length >= max_directions) {
-        console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]} because of max directions while ${(next_direction === 3) ? 'going right' : 'going down'}.`);
         this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
-        this.skips[0]++;
         continue;
       }
       next_direction = this.getNextDirection(options.directions);
       if (this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions.includes(next_direction)) {
-        this.skips[1]++;
+        this.logForDebug(1, cursor_index, next_direction);
         this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].addIneligibility(next_direction);
         next_direction = this.getDifferentDirection(this.getDirectionArray(options.directions), this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Directions);
       }
       if(!this.checkAdjacentCells(cursor[ColRow.Column], cursor[ColRow.Row], next_direction)) {
         if(this.checkEligibility(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, max_directions)) {
-          console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]} because of filled adjacent cells while ${(next_direction === 3) ? 'going right' : 'going down'}.`);
-          this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
+        this.logForDebug(2, cursor_index, next_direction);
+        this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
         }
-        this.skips[2]++
         continue;
       }
       pivot_letter = this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content;
@@ -161,7 +169,6 @@ export class CellService {
             .catch((error) => alert('Cannot get Hint:' + error));
           next_cursor = this.findStartingPoint(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, this.lowerCasePipe.transform(this.number2WordPipe.transform(word.word)), pivot_letter);
           if(next_cursor[0] === -1 || next_cursor[1] === -1) {
-            this.skips[3]++;
             retry = 1;
             break;
           }
@@ -174,14 +181,11 @@ export class CellService {
         }
         parameter_found = this.checkPeriphery(next_cursor[ColRow.Column], next_cursor[ColRow.Row], word.word.length, next_direction);
         [matching_array, retry] = this.getViability(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, matching_array, pivot_letter, retry, parameter_found, 5);
-        if(retry === -1) {
-          break;
-        }
-      } while (retry)
+      } while (retry != 0 && retry != -1)
 
       if(retry === -1) {
         if(this.checkEligibility(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, max_directions)) {
-          console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]}.`);
+          this.logForDebug(5, cursor_index);
           this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
         }
         continue;
@@ -197,17 +201,40 @@ export class CellService {
       console.log(`Word Nr.${word_count + 1}: ${this.number2WordPipe.transform(word.word)}`);
       if(this.addWord(cursor[ColRow.Column], cursor[ColRow.Row], this.number2WordPipe.transform(word.word), hint, next_direction)) {
         word_count++;
+      } else if (this.checkEligibility(cursor[ColRow.Column], cursor[ColRow.Row], next_direction, max_directions)){
+          this.filled_cells = this.removeElement(cursor_index, this.filled_cells);
       }
     }
     this.logAttempt(word_count, (performance.now() - start) / 1000, true);
   }
 
+  async checkWordAmount(): Promise<boolean> {
+    let amount: number = 0;
+    await this.databaseService.getN0OfWords()
+      .then((count) => amount = count);
+    return (amount < 500) ? false : true;
+  }
+
+  logForDebug(type: number, cursor_index: number, direction?: Directions): void {
+    if (!this.debug) {
+      return;
+    }
+    console.log(`Removing element at index ${cursor_index}: ${this.filled_cells[cursor_index]}.`);
+    switch(type) {
+      case 0:
+        console.log(`because of max directions while ${(direction === 3) ? 'going right' : 'going down'}.`);
+        break;
+      case 2:
+        console.log(`because of filled adjacent cells while ${(direction === 3) ? 'going right' : 'going down'}.`);
+        break;
+    }
+    this.skips[type]++;
+  }
+
   getViability(column: number, row: number, direction: Directions, matching_array: number[], pivot_letter: number, retry: number, success: boolean, skips_type: number): [number[], number] {
-    console.log(`Success? ${(success) ? 'yes!' : 'no :('}`);
     if(!success) {  
       if(matching_array[matching_array.length - 1] === pivot_letter  || matching_array[0] === pivot_letter) {
         if (retry === 1) {
-          console.log("We're doing it from the other side!");
           matching_array = this.shortenToPivot(column, row, direction, this.getMaxLength(column, row, this.invertDirection(direction)) - 1, true);
           return [matching_array, 2];
         } else {
@@ -216,7 +243,6 @@ export class CellService {
         }
   
       } else {
-        console.log("We're doing this!");
         matching_array = this.shortenToPivot(column, row, direction, this.getMaxLength(column, row, this.invertDirection(direction)) - 1, false);
         retry = 1;
         return [matching_array, 1]
@@ -649,11 +675,12 @@ export class CellService {
     if (this.getMaxLength(column, row, direction) < word.length) {
       throw new RangeError(`Selected word does not fit: ${word} Size: ${word.length} Start Point: ${cursor}`);
     }
-    this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Hint = hint;
     this.hint_cells.push([cursor[ColRow.Column], cursor[ColRow.Row]]);
+    this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].addHint(hint, direction, this.hint_cells.length);
     for (let word_index = 0; word_index < word.length; word_index++) {
       curr_cell = this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content;
       this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].addDirection(direction);
+      to_be_filled.push([cursor[ColRow.Column], cursor[ColRow.Row]]);
       if(curr_cell === -1 || curr_cell === this.letterPipe.transform(word[word_index])) {
         this.cell_grid[cursor[ColRow.Column]][cursor[ColRow.Row]].Content = this.letterPipe.transform(word[word_index]);
       } else {
@@ -662,7 +689,6 @@ export class CellService {
         }
         return false;
       }
-      to_be_filled.push([cursor[ColRow.Column], cursor[ColRow.Row]])
       cursor = this.move(cursor[ColRow.Column], cursor[ColRow.Row], direction);
     }
     this.filled_cells = this.filled_cells.concat(to_be_filled);
@@ -688,6 +714,7 @@ export class CellService {
       }
     }
     this.cell_grid[to_be_deleted[0][0]][to_be_deleted[0][1]].removeHint(n0hints - 1);
+    
   }
 
   move(column: number, row: number, direction: Directions, steps: number = 1): [number, number] {
@@ -720,7 +747,7 @@ export class CellService {
     direction = this.invertDirection(direction);
     let max_columns: number = this.grid_size[0] - 1;
     let max_rows: number = this.grid_size[1] - 1;
-    let distances: Edges = { /* Up, Left, Right, Down */
+    let distances: Edges = {
     up: column,
     left: row,
     right: max_rows - row,
@@ -752,7 +779,7 @@ export class CellService {
   getMaxLength(column: number, row: number, direction: Directions): number {
     let max_columns: number = this.grid_size[0];
     let max_rows: number = this.grid_size[1];
-    let distances: Edges = { /* Up, Left, Right, Down */
+    let distances: Edges = {
       up: column,
       left: row,
       right: max_rows - row,
