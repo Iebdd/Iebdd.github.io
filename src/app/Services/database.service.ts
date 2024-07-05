@@ -3,7 +3,9 @@ import Dexie from 'dexie';
 import { db } from '../../db/db';
 import { LetterPipe } from '../Pipes/letter.pipe';
 import { LoadDataService } from './load-data.service';
+import { StateService } from '../Services/state.service';
 import { Dict_Entry } from '../model/dtypes';
+import { States } from '../model/enums';
 import { Observable, BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -13,10 +15,12 @@ export class DatabaseService {
 
   available_letters: number = 1;
 
-  constructor(private LetterPipe: LetterPipe,
-              private LoadDataService: LoadDataService) { }
+  constructor(private letterPipe: LetterPipe,
+              private loadDataService: LoadDataService,
+              private stateService: StateService) { }
 
   loading$ = new BehaviorSubject<boolean>(true);
+  progress: number = 0;
   progress$ = new BehaviorSubject<number>(0);
 
 
@@ -69,6 +73,15 @@ export class DatabaseService {
     return db.Hints.count();
   }
 
+  async updateProgress(): Promise<void> {
+    this.getN0OfWords()
+      .then(() => this.progress$.next(++this.progress));
+  }
+
+  getProgress(): Observable<number> {
+    return this.progress$.asObservable();
+  }
+
   async initDB(): Promise<boolean> {
     let exist: boolean = true;
     await Dexie.exists("Crossword")
@@ -81,36 +94,32 @@ export class DatabaseService {
     if(!exist){
       return true;
     }
-    this.toggleLoad();
+    this.stateService.toggleState(States.Load);
     return false;
   }
 
-  getLoadState(): Observable<boolean> {
-    return this.loading$.asObservable();
-  }
 
-  toggleLoad(): void {
-    this.loading$.next(!this.loading$);
-  }
 
   async createEntries() {
     let word_count: number = 0;
+    let percent: number = Math.floor(this.loadDataService.totalLength / 100);
     let curr_entry: Dict_Entry = {
       hint: '',
       words: []
     };
     let occs_buffer: number[] = [];
     for (let letters = 0; letters < this.available_letters; letters++) {
-      let hint_no: number = this.LoadDataService.getLengthByIndex(letters);
+      let hint_no: number = this.loadDataService.getLengthByIndex(letters);
       for (let hints = 0; hints < hint_no; hints++) {
-        curr_entry = this.LoadDataService.getFragment(letters, hints);
+        curr_entry = this.loadDataService.getFragment(letters, hints);
         this.addHint(curr_entry.hint);
         for (let words = 0; words < curr_entry.words.length; words++) {
           for(let occs = 0; occs < curr_entry.words[words].length; occs++) {
-            occs_buffer.push(this.LetterPipe.transform(curr_entry.words[words][occs]));
+            occs_buffer.push(this.letterPipe.transform(curr_entry.words[words][occs]));
           }
           this.addWord(occs_buffer, hints)
           word_count++;
+          (word_count % percent == 0) ? this.updateProgress() : null;         //Injects a DB request into every 1% of loaded data to return the progress
           occs_buffer.length = 0;
         }
       }

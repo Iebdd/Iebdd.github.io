@@ -27,3 +27,16 @@ export const enum ID {
     Hint,
     Word
 }
+
+export const enum Screen {
+    notHandheld,
+    handheld
+}
+
+export const enum States {
+    Load,
+    Letters,
+    Hints,
+    Grid,
+    Working
+}

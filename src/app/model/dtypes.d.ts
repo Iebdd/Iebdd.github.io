@@ -6,5 +6,6 @@ export interface Dict_Entry {
 export interface Options {
     directions: boolean[];
     n0words: number;
+    amap: boolean                       //As many as possible
 }
 

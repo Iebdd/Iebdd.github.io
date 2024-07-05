@@ -38,8 +38,10 @@ export class LoadDataService{
 
   get totalLength(): number {
     let total_length: number = 0;
-    for (let index = 0; index < this.available_letters; index++) {
-      total_length += this.json_data['words'][this.letters[index]].length
+    for (let letter_index = 0; letter_index < this.available_letters; letter_index++) {
+      for(let word_index = 0; word_index < this.json_data['words'][this.letters[letter_index]].length; word_index++) {
+        total_length += this.json_data['words'][this.letters[letter_index]][word_index][1].length
+      }
     }
     return total_length;
   }

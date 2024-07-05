@@ -8,12 +8,8 @@ import { Directions } from '../model/enums';
 export class DirectionPipe implements PipeTransform {
 
   directions: string[] = ["", "", "l", "r", "d", "u", "dil", "diru", "dir", "dilu"];
-  markers: string[] = ["", "", "←", "→", "↓", "↑", "↙", "↘", "↗", "↖"]
 
-  transform(direction: Directions, marker?: boolean): string {
-    if(marker) {
-      return this.markers[direction];
-    }
+  transform(direction: Directions): string {
     return this.directions[direction];
   }
 

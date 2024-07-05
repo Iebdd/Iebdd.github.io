@@ -1,24 +1,53 @@
-<div class="button">
-  <button (click)="fillGrid()" [disabled]="loading">Generate!</button> <br>
-  <button (click)="toggleLetters()">@if(hidden_letters) {Show} @else {Hide} Content</button> <br>
-  <button (click)="clearDB()">Clear Database</button> <br>
-  @if(loading) {
-    <p>Database is loading. Please wait...</p>
-  }
-</div>
-<table>
-  <tbody>
-    @for (columns of cell_grid; track columns) {
-      <tr>
-        @for (row of columns; track row) {
-            <td [class.blue-border]="row.isHint()" [class.no-border]="row.Content == -1" >
+<div class="cell_grid">
+  <table class="main_grid">
+    <tbody>
+      @for (columns of cell_grid; track columns) {
+        <tr>
+          @for (row of columns; track row) {
+            <td [class.hint-border]="row.isHint()" 
+                [class.no-border]="row.Content == -1"
+                [class.highlight]="row.HintIndex.includes(highlight_c)">
               @for (hint of row.HintIndex; track hint) {
-                <p class="cell_hint {{row.HintN0[$index] | direction}}">{{this.hint}}</p>
+                <p class="cell_hint {{row.HintN0[$index] | direction}}"
+                   (mouseenter)="highlight_h = hint"
+                   (mouseleave)="highlight_h = -1">
+                   {{this.hint}}
+                </p>
               }
               <p class="letters" [class.hidden]="hidden_letters">{{row.Content | char}}</p>
             </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+  <div class="hint_grid">
+    @if (!hidden_hints) {
+      @for (direction of directions; track direction; let dir_index = $index) {
+        @if(dir_index > 1 && hint_array[dir_index].length != 0) {
+          @if (hint_array[dir_index]) {
+            @for (hint of hint_array[dir_index]; track hint; let hint_index = $index) {
+              @if ($first) {
+                <strong>{{direction}}</strong> <br>
+              }
+              <div [class.highlight]="hint[1] == highlight_h"
+                   (mouseenter)="highlight_c = hint[1]"
+                   (mouseleave)="highlight_c = -1">
+              <p>
+                 {{hint[1]}} : {{hint[0]}}
+              </p> <br>
+              @if ($last) {
+                <br>
+              }
+              </div>
+            }
+          }
         }
-      </tr>
+      }
     }
-  </tbody>
-</table>
+  </div>
+</div>
+
+
+
+

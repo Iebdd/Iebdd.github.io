@@ -1,0 +1,13 @@
+<div class="panel_grid">
+    <button class="button fill" 
+      (click)="fillGrid()" 
+      [disabled]="loading || working" 
+      [ngStyle]="{'background': (loading) ? renderLoadBar() : null}">
+      @if (loading) {Loading: {{progress}}%. <br> Please wait ...} @else if (working) {Generating ...} @else {Generate!}
+    </button>
+    <button class="button hide" (click)="toggleState(1)" [disabled]="default_grid">@if(hidden_letters) {Show} @else {Hide} Letters</button>
+    <button class="button clear" (click)="clearDB()" [disabled]="loading || working">Clear DB</button>
+    @if(loading) {
+      <p>Database is loading. Please wait...</p>
+    }
+</div>

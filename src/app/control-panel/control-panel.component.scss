@@ -1,0 +1,45 @@
+.panel_grid {
+    display: grid;
+    border: 2px solid black;
+    grid-template-columns: 13.8vw 3vw 3vw;
+    grid-template-rows: calc(67.5vh - 50px) 10vh 10vh 10vh;
+}
+
+button:disabled, button[disabled]{
+    transition: 0.25s;
+    background-color: #bbb;
+    color: #616161;
+}
+
+.button {
+    transition: 0.25s;
+    border: none;
+    border-top: 1.5px solid black;
+    background: none;
+    color: inherit;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+    &.hide {
+        grid-area: -2 / 2;
+        border-left: 1.5px solid black;
+    }
+    &.fill {
+        grid-area: -2 / 1 / -1 / -3;
+    }
+    &.clear {
+        grid-area: -2 / 3;
+        border-left: 1.5px solid black;
+    }
+}
+
+.button:hover:disabled {
+    cursor: not-allowed;
+  }
+
+.button:hover:enabled {
+    transition: 0.25s;
+    background: #1a0ebe;
+    color: #fff;
+}

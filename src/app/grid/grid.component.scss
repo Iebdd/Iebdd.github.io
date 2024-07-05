@@ -1,16 +1,35 @@
-@use 'sass:math';
-
 :host {
   --cell-size: 2vw;
   --cell-color: black
 }
 
+.cell_grid {
+  display: grid;
+  border: 2px solid black;
+  grid-template-columns: 43vw 16.7vw;
+  grid-template-rows: calc(97.5vh - 50px)
+}
+
 table {
+  border: 2px solid black;
+}
+
+.main_grid {
+  grid-area: 1 / 1;
   table-layout: fixed;
   margin: 30px;
   margin-left: auto;
   margin-right: auto;
-  max-width: 60vw;
+  max-width: 43vw;
+  max-height: inherit;
+}
+
+.hint_grid {
+  margin-top: 30px;
+  overflow-y: auto; 
+  max-height: inherit;
+  max-width: 17vw;
+  grid-area: 1 / 2;
 }
 
 td {
@@ -27,32 +46,37 @@ td {
   color: white;
 }
 
-.blue-border {
-  border: 2px solid blue;
-}
-
-table {
-  border: 2px solid black;
+.hint-border {
+  border: 2px solid #1a0ebe;
 }
 
 .no-border {
   border-style: revert;
 }
 
-.button {
-  position: absolute;
-  left: 80vw;
-  right: 10vw;
-  top: 20vh;
+ol {
+  margin: 0;
+  counter-reset: numbering;
+  list-style-type: none;
 }
 
-.letters {
+ol li:before {
+  content:counter(numbering) " ";
+  counter-increment: numbering;
+}
+
+.highlight {
+  background: #1a0ebe;
+  color: white;
+}
+
+p {
   display: inline;
   margin: 0;
   padding: 0;
 }
+
 .cell_hint {
-  @extend .letters;
   position: absolute;
   font-size: 0.6em;
   &.l {
@@ -88,5 +112,17 @@ table {
   &.diru {
     top: 0;
     right: 2px;
+  }
+}
+
+@supports (scrollbar-width: thin) {
+  .hint_grid {
+    scrollbar-width: thin;
+  }
+}
+
+@supports selector(::webkit-scrollbar) {
+  .hint_grid::webkit-scrollbar {
+    width: 15px; 
   }
 }

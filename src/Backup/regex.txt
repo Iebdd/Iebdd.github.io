@@ -1,0 +1,54 @@
+(?<=\d) (.+)?(\w+?)
+
+Find: \d\d?\p{L}
+Replace: A number immediately followed by a letter
+
+(?<=\d) .*[\w\.-] \w
+
+Find: \d .*?[öäüÄÜÖÉÁéáóÓ].*?
+Replace: Any non ASCII letters in the Words section
+
+Find: (\d\d?.*\w+)\n([^\d]*?,)
+Replace manually: No space between two linebreaks of words
+
+Find: .*\.\.\..*\n
+Replace: [empty]
+
+Find: (\d\d?.+\w)[ -](\w)
+Replace: \1\2
+
+Find: (\w)- ?\n
+Replace: \1
+
+Find: (\w,) ?\n
+Replace: \1 
+
+Find: (?<=\n)([^\d]{1,2}.+?) ?\n([^\d]{1,2})
+Replace: \1 \2
+
+Find: (?:\d\d?|,) (\w+)(?=[,\n])
+Replace: "\1", 
+
+Find: ", ?,?\n"
+Replace: ", "
+
+Find: (?<=\n)(\w.+)
+Replace: [\1], [[
+
+Find: ", ?\n\[
+Replace: "]],\n[
+
+Find: \[\n"
+Replace: ["
+
+Find: ^(\w.*)
+Replace: [\1], [[
+
+Find: (\[\[)\n("\w.*)
+Replace: \1\2
+
+Find: ", ?\n\n?$
+Replace: "]]
+
+Überprüfung: \[[^ÄäaA\["]
+Keine Einfachen Klammern die nicht mit einem erwarteten Buchstaben beginnen (A austauschen)
