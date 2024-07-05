@@ -131,7 +131,8 @@ export class CellService {
     }
     this.emptyGrid();
     await this.addStartingWord(options.directions);
-    this.stateService.toggleState(2);
+    this.stateService.toggleState(States.Letters);
+    this.stateService.toggleState(States.Hints);
 
     while (word_count < options.n0words && !this.cancel) { 
       if(previous_array_size === this.filled_cells.length && this.debug) {
